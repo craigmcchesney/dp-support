@@ -1,0 +1,4 @@
+#!/bin/sh
+
+./HDFView/lib/app/hdfview.sh > /dev/null 2>&1
+
