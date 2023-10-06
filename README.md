@@ -61,6 +61,7 @@ Here is a note about installing a previous version:
 
 Regarding configuration, if user/password authentication is enabled on MongoDB, this needs to be reflected in the mongo-express configuration.  Adding the connectionString explicitly at the top of the config.js file (including the username and password) seems to be the easiest thing to do, e.g.,
 
+```
 let mongo = {
   <snip>
   connectionString: 'mongodb://user:password@localhost:27017/',
@@ -68,9 +69,11 @@ let mongo = {
   port: '27017',
   dbName: '',
 };
+```
 
 I also like to enable "admin" mode, which shows everything in the database.  This is done in the section shown below, by setting "admin: true":
 
+```
 module.exports = {
   mongodb: {
     <snip>
@@ -78,7 +81,7 @@ module.exports = {
     // if admin is true, the auth list below will be ignored
     // if admin is true, you will need to enter an admin username/password below (if it is needed)
     admin: true,
-
+```
 
 ## development installation
 ## production installation
