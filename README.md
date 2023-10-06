@@ -65,9 +65,7 @@ Regarding configuration, if user/password authentication is enabled on MongoDB, 
 let mongo = {
   <snip>
   connectionString: 'mongodb://user:password@localhost:27017/',
-  host: '127.0.0.1',
-  port: '27017',
-  dbName: '',
+  <snip>
 };
 ```
 
@@ -77,10 +75,8 @@ I also like to enable "admin" mode, which shows everything in the database.  Thi
 module.exports = {
   mongodb: {
     <snip>
-    // set admin to true if you want to turn on admin features
-    // if admin is true, the auth list below will be ignored
-    // if admin is true, you will need to enter an admin username/password below (if it is needed)
     admin: true,
+    <snip>
 ```
 
 ## development installation
