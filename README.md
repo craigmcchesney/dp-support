@@ -20,7 +20,7 @@ The other primary technology element is [MongoDB](https://www.mongodb.com/).  Mo
 - A prototype implementation was built focusing on the creation of a general API supporting [ingestion](https://github.com/osprey-dcs/datastore) and [query](https://github.com/osprey-dcs/datastore-service) of heterogeneous data types including scalar, array / table, structure, and image.  Service implementations were created using Java for both the Ingestion and Query Services, as well as libraries for building client applications.  The prototype technology stack included both [InfluxDB](https://www.influxdata.com/) (for time series data) and MongoDB (for metadata).  This prototype did not meet the project goal for ingestion performance.
 - A prototype web application was created using JavaScript React.js and using the gRPC query API.
 - Performance benchmark applications were developed and executed to evaluate candidate technologies for use in the Data Platform implementation in light of the project performance goal stated above.  Benchmarks focused on gRPC for API communication; InfluxDB, MongoDB and MariaDB for database storage; and writing JSON and HDF5 files to disk.  The benchmark results showed that it was likely we could build service implementations meeting our performance requirements by using gRPC for communication and [MongoDB for storing "buckets" of time series data](https://dev.to/hpgrahsl/a-slightly-closer-look-at-mongodb-5-0-time-series-collections-part-1-32m6).
-- An initial implementation of the Ingestion Service providing a gRPC API and using MongoDB for storing time-series data was built.  It is accompanied by a performance benchmark application that is used at each stage of development to measure performance relative to the project goal.  The initial implementation exceeds our goal by a comfortable margin, but this will continue to be a focus as the project evolves.
+- An initial Java implementation of the Ingestion Service providing a gRPC API and using MongoDB for storing time-series data was built.  It is accompanied by a performance benchmark application that is used at each stage of development to measure performance relative to the project goal.  The initial implementation exceeds our goal by a comfortable margin, but this will continue to be a focus as the project evolves.
 
 
 # todo and roadmap
@@ -40,6 +40,7 @@ The other primary technology element is [MongoDB](https://www.mongodb.com/).  Mo
 - [dp-common](https://github.com/osprey-dcs/dp-common) - Includes features in common to both the Ingestion and Query Services, such as the configuration mechanism.
 - [dp-ingest](https://github.com/osprey-dcs/dp-ingest) - Includes the initial implementation of the Ingestion Service, as well as the performance benchmark application.
 - [dp-support](https://github.com/osprey-dcs/dp-support) - (this repo) Includes tools for installing, configuring, and managing the Data Platform ecosystem.
+- [dp-benchmark](https://github.com/osprey-dcs/dp-benchmark) - Includes the performance benchmark applications, not part of the Data Platform.
 
 # installation
 
@@ -80,22 +81,74 @@ module.exports = {
 ```
 
 ## development installation
+Developer installation consists of cloning the first 3 github repos listed above. The dp-support repo is optional, and the dp-benchmark is probably not useful unless you are interested in performance benchmarks outside the Data Platform).  After cloning the repos, use maven to "install" the dp-grpc and dp-common projects (either from the command line or using your Java IDE).  Then use maven to compile the dp-ingest project.
+
+There is no requirement for the directory structure used, however, the dp-support repo will probably make some assumptions about the directory structure for a deployed system.  I'm using the convention of a root deployment directory "~/dp" with subdirectories "~/dp/dp-support" (where the dp-support repo is cloned), and "~/dp/dp-java" (where the 3 java repos are cloned).  This will probably be reflected in the scripts and utilites created in dp-support.
+
+To run the ingestion service, execute IngestionGrpcServer.main().  To run the performance benchmark (with the server running), execute IngestionPerformanceBenchmark.main().
+
+There are jUnit tests for the elements of the service in dp-ingest/src/test/java.
+
 ## production installation
+TODO: create "fat" jars and make them available via the github "releases" mechanism.  Create scripts etc for managing ecosystem services in such an environment.
 
 # using the data platform
+TODO
 
 ## ingestion service API
+TODO (for now, see [ingestion.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/ingestion.proto))
+
 ## query service API
+TODO (for now, see [query.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/query.proto))
 
 ## service configuration
+
 ### default config file
+The default configuration file for the Ingestion Service is in "dp-ingest/src/main/resources/application.yml".  For now, I've tried to keep the configuration minimal.  The contents are as follows:
+
+```
+GrpcServer:
+  port: 50051
+
+MongoHandler:
+  numWorkers: 7
+  dbHost: localhost
+  dbPort: 27017
+  dbUser: admin
+  dbPassword: admin
+
+Benchmark:
+  grpcConnectString: "localhost:50051"
+```
+
+The settings are grouped by subcomponent of the Ingestion Service: GrpcServer, MongoHandler, and Benchmark.  The setting names are pretty self explanatory.  The setting MongoHandler.numWorkers controls the number of worker threads created within the handler framework for simultaneously writing ingested data to MongoDB.  I've had pretty good results using a value of 7 on my development system, but this parameter might take some tuning on other systems to get the best performance.
+
+The default settings are probably reasonable for most development systems, though you'll want to override the MongoDB uername and password to match your configuration (or make them both "admin").  Options for overriding are discussed below.
+
 ### overriding config file
+
+The default configuration file can be overridden in two different ways, by specifying an alternative file on either the command line used to start the application, or as an environment variable.
+
+To specify an alternative on the command line, add a VM option (e.g., on the command line BEFORE the class name) like the following: "-Ddp.config=/path/to/config/override.yml".
+
+To specify an alternative via an envoronment variable, define a variable in the environment "DP.CONFIG=/path/to/config/override.yml" before running the Ingestion Service application.
+
 ### overriding individual configuration properties
+
+In addition to overriding the default config file, individual configuration settings can be overridden on the command line.  To do so, use a VM option (in the java command line BEFORE the class name), prefixing the configuration setting name with "dp.".  For example, to override the gRPC port, use "-Ddp.GrpcServer.port=50052".
 
 ## running data platform services
 
+TODO
+
 # appendix and technical details
+
+TODO
 
 ## mongodb schema
 
+TODO
+
 ## benchmark approach and results
+
+TODO
