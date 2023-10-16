@@ -26,12 +26,19 @@ The other primary technology element is [MongoDB](https://www.mongodb.com/).  Mo
 # todo and roadmap
 - The next step in development is to build an initial implementation of the Query Service that provides a gRPC API and uses the MongoDB schema created by the Ingestion Service to fulfill client query requests.
 - The initial implementation of the Ingestion Service supports scalar data types including float, integer, string, and boolean data.  Additional work is required to support arrays/tables, structures, and images.
-- Add an API for checking the status of individual ingestion requests, and identifying problems in ingested data.
-- Add an API for registering data providers.
+- Ingestion Service features:
+  - Add an API for checking the status of individual ingestion requests, and identifying problems in ingested data.
+  - Add an API for registering data providers.
+  - The initial Ingestion Service implementation is optimized to handle data with a regular sampling interval.  We need to add support for ingestion data with irregular sampling (or do we?).
+  - Evaluate the requirements for updating metadata, and make changes to Ingestion Service implementation and database schema as appropriate.
+- Query Service features:
+  - Add authentication / authorization mechanism.
+- Miscellaneous features:
+  - add support for post-ingestion annotation of data
+  - add support for exporting data
+  - add support for uploading and linking datasets, data provenance
 - Build libraries for developing client applications.  This might include support for building applications with a rolling time window or retrieving data at a fixed interval.
 - Build a new web version of the web application.
-- The initial Ingestion Service implementation is optimized to handle data with a regular sampling interval.  We need to add support for ingestion data with irregular sampling (or do we?).
-- Evaluate the requirements for updating metadata, and make changes to Ingestion Service implementation and database schema as appropriate.
 - Perform load testing and address issues that arise.
 - Potential directions include migration of time-series data from MongoDB to HDF5 files, storing protobuf data directly in MongoDB or data files, and horizontal scaling using an approach such as [Kubernetes](https://kubernetes.io/).
 
