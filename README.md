@@ -100,7 +100,6 @@ There are jUnit tests for the elements of the service in dp-ingest/src/test/java
 TODO: create "fat" jars and make them available via the github "releases" mechanism.  Create scripts etc for managing ecosystem services in such an environment.
 
 # using the data platform
-TODO
 
 ## data platform API
 
@@ -110,13 +109,35 @@ The Data Platform uses the [gRPC remote procedure call (RPC) framework](https://
 
 The gRPC framework uses [Google's Protocol Buffers](https://protobuf.dev/overview) for serializing structured data.  The API is specified in text files with a ".proto" extension with definitions of both protocol buffer data structures and services.  The service definition includes the RPC methods supported by the service with method parameters and return types.
 
-The Data Platform API includes "proto" files for both the Ingestion and Query Services that define the RPC methods and data structures specific to those services.  They both utilize a third file, "common.proto" that defines data structures common to both APIs.  Each of these files is discussed in more detail below.
+The Data Platform API includes "proto" files for both the Ingestion and Query Services that define the RPC methods and data structures specific to those services.  They both utilize a third file, "common.proto" that defines data structures common to both APIs.  The "proto" files defining the Data Platform API are contained in the [dp-grpc repo](https://github.com/osprey-dcs/dp-grpc).  Each of these files is discussed in more detail below, preceded by a description of the service proto files and relevant conventions.
+
+### service proto file structure and conventions
+
+The service "proto" files, "ingestion.proto" and "query.proto" use a similar file structure and naming conventions.
+
+Each file imports the file "common.proto" which defines data structures in common to both services.
+
+Each proto file includes a "service" definition block that defines the service's RPC method interface including method parameters and return types.
+
+The remainder of each file includes data structures specific to the service API.  The "most important" data structures are listed first.
+
+The primary naming convention concerns the parameters and return types for the RPC methods.  In general, method parameters are bundled into a single gRPC "message" (data structure) with a name that includes the method name.  Likewise for the method return type.  In cases where it is appropriate to use the same data structure for method parameters or return value for multiple methods, we do our best to indicate that in the data structure names.  Below are a simple example and then one that is a bit more complex.
+
+A simple example is the Ingestion Service method "registerProvider()".  The method parameters are bundled in a message data structure called "RegisterProviderRequest".  The method returns the message type "RegisterProviderResponse".
+
+A more complex example is the Ingestion Service methods "streamingIngestion()" and "unaryIngestion()".  The method parameters to each RPC are bundled in the message type "IngestionRequest".  The method return type is "IngestionResponse".
+
 
 ### ingestion service API
-TODO (for now, see [ingestion.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/ingestion.proto))
+
+The Ingestion Service API is defined in [ingestion.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/ingestion.proto)).
+
+
 
 ### query service API
 TODO (for now, see [query.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/query.proto))
+
+### common.proto
 
 ## service configuration
 
@@ -156,16 +177,20 @@ In addition to overriding the default config file, individual configuration sett
 
 ## running data platform services
 
-TODO
+TODO: details for running the Ingestion and Query Services.
 
 # appendix and technical details
 
-TODO
+TODO: describe contents of appendix.
 
 ## mongodb schema
 
-TODO
+TODO: details about database schema for time series and metadata.
+
+## gRPC
+
+TODO: details for using protoc and programming examples for languages that we have experience with (Java, C++, Python, JavaScript, etc).
 
 ## benchmark approach and results
 
-TODO
+TODO: details about benchmark results for gRPC, InfluxDB, MongoDB, MariaDB, JSON file, HDF5 file, etc.
