@@ -102,10 +102,20 @@ TODO: create "fat" jars and make them available via the github "releases" mechan
 # using the data platform
 TODO
 
-## ingestion service API
+## data platform API
+
+### API overview
+
+The Data Platform uses the [gRPC remote procedure call (RPC) framework](https://grpc.io/) to provide the API for its Ingestion and Query Services.  Support for bulding gRPC clients and servers is provided for[many programming languages](https://grpc.io/docs/languages/).
+
+The gRPC framework uses [Google's Protocol Buffers](https://protobuf.dev/overview) for serializing structured data.  The API is specified in text files with a ".proto" extension with definitions of both protocol buffer data structures and services.  The service definition includes the RPC methods supported by the service with method parameters and return types.
+
+The Data Platform API includes "proto" files for both the Ingestion and Query Services that define the RPC methods and data structures specific to those services.  They both utilize a third file, "common.proto" that defines data structures common to both APIs.  Each of these files is discussed in more detail below.
+
+### ingestion service API
 TODO (for now, see [ingestion.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/ingestion.proto))
 
-## query service API
+### query service API
 TODO (for now, see [query.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/query.proto))
 
 ## service configuration
