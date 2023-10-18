@@ -127,12 +127,29 @@ A simple example is the Ingestion Service method "registerProvider()".  The meth
 
 A more complex example is the Ingestion Service methods "streamingIngestion()" and "unaryIngestion()".  The method parameters to each RPC are bundled in the message type "IngestionRequest".  The method return type is "IngestionResponse".
 
-
 ### ingestion service API
 
-The Ingestion Service API is defined in [ingestion.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/ingestion.proto)).
+The Ingestion Service API is defined in the dp-grpc repo's [ingestion.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/ingestion.proto) file.  The strcuture and naming conventions used within the file are discussed above.
 
+#### ingestion service API RPC methods
 
+##### registerProvider()
+
+```
+rpc registerProvider (RegisterProviderRequest) returns (RegisterProviderResponse);
+```
+
+The provider registration API is not yet implemented.  For now, ingestion clients should send a unique integer identifier on ingestion requests to distinghuish provider.
+
+##### streamingIngestion()
+
+```
+rpc streamingIngestion (stream IngestionRequest) returns (stream IngestionResponse);
+```
+
+This is the primary method for data ingestion.  It is a bidirectional streaming RPC method.  It accepts a stream of *IngestionRequest* messages, and returns a stream of *IngestionResponse* messages, one for each request.
+
+##### unaryIngestion():
 
 ### query service API
 TODO (for now, see [query.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/query.proto))
