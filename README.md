@@ -109,7 +109,7 @@ The Data Platform uses the [gRPC remote procedure call (RPC) framework](https://
 
 The gRPC framework uses [Google's Protocol Buffers](https://protobuf.dev/overview) for serializing structured data.  The API is specified in text files with a ".proto" extension with definitions of both protocol buffer data structures and services.  The service definition includes the RPC methods supported by the service with method parameters and return types.
 
-The Data Platform API includes "proto" files for both the Ingestion and Query Services that define the RPC methods and data structures specific to those services.  They both utilize a third file, "common.proto" that defines data structures common to both APIs.  The "proto" files defining the Data Platform API are contained in the [dp-grpc repo](https://github.com/osprey-dcs/dp-grpc).  Each of these files is discussed in more detail below, preceded by a description of the service proto files and relevant conventions.
+The Data Platform API includes "proto" files for both the Ingestion and Query Services that define the RPC methods and data structures specific to those services.  They both utilize a third file, "common.proto" that defines data structures common to both APIs.  The "proto" files defining the Data Platform API are contained in the [dp-grpc repo](https://github.com/osprey-dcs/dp-grpc).  The Ingestion and Query Service APIs are discussed in more detail below, preceded by a description of the service proto files and relevant conventions.
 
 ### service proto file structure and conventions
 
@@ -372,7 +372,145 @@ TODO: details for running the Ingestion and Query Services.
 
 # appendix and technical details
 
-TODO: describe contents of appendix.
+## developer notes
+
+### development milestones
+
+#### October 2023: initial ingestion service implementation for scalar data using mongodb for time series data
+
+##### performance benchmarking
+
+The first data platform development milestone focused on building an ingestion service implementation handling scalar data types (float, integer, string, and boolean) that exceeds the project performance goal of capturing data for 4,000 data sources at a sampling rate of 1 KHz (or 4M scalar values/second).
+
+Performance benchmarks were developed to investigate the performance of technologies used in the initial Ingestion Service prototype implementation (gRPC, InfluxDB, and MongoDB), as well as some alternatives including MariaDB as well as HDF5 and JSON file storage.  
+
+Benchmark results showed that gRPC communication provided ample headroom beyond the project performance requirements.  
+
+InfluxDB, used in the prototype implementation for storing time series data, performed well in the benchmark but topped out at about 1M values/second (using the core community product without scaling).
+
+MariaDB, a relational database platform alternative, performed well in the benchmark for storing time series data, but also topped out under 1M values per second (storing time series data points as database rows).
+
+For MongoDB, I developed performance benchmarks for storing time series data as individual points, as well as using "bucketed time series data" (storing a collection of points in a single MongoDB "document").  Using the bucketed data approach showed performance exceeding the performance goal by a comfortable margin.
+
+Based on the benchmark results, we decided to move forward with an Ingestion Service implementation using gRPC for communication, and MongoDB for storage of both time series data and metadata.
+
+An ingestion performance benchmark application was created to measure performance at each step of the development process to see where we stand relative to the goal of 4M values/second.  The benchmark application sends one minute's data for 4,000 PVs each sampled at 1KHz.
+
+At completion of this milestone, the performance benchmark ranges from 7M to 10M values/second.
+
+##### ingestion service implementation
+
+The Ingestion Service implementation includes three main elements: the server machinery, the gRPC service implementation, and an ingestion handler.  Each element is described in more detail below.
+
+The packages and classes for the Ingestion Service are contained in the [dp-ingest github repo](https://github.com/osprey-dcs/dp-ingest).
+
+###### ingestion server
+
+The Ingestion server element includes the class [IngestionGrpcServer](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/server/IngestionGrpcServer.java) in the package "com.ospreydcs.dp.ingest.server".
+
+This simple class includes a *main()* method for running the Ingestion Service.  It instantiates an *IngestionServiceImpl*, implementing the gRPC service API, and starts a gRPC server listening on the configured port.  It the registers a shutdown hook and waits for the server to shut down.
+
+###### ingestion service
+
+The class [IngestionServiceImpl](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/service/IngestionServiceImpl.java) provides an implementation of the gRPC Ingestion Service API and extends *DpIngestionServiceImplBase* which is generated by the Java protoc gRPC compiler.
+
+The main purpose of this class is to implement the RPC methods specified in the gRPC proto file for the Ingestion Service.  The initial implementation only includes the method *streamingIngestion()*, the bidirectional streaming API for ingesting data.
+
+This class is instantiated by the ingestion server and provides methods *init()* and *fini()* to initialize and shutdown the service, respectively.  The init() method is passed an ingestion handler instance that is used to handle incoming ingestion requests.
+
+The *streamingIngestion()* method performs validation on each *IngestionRequest* received on the method's input stream (using the handler implementation of *validateIngestionRequest()*) and sends an *IngestionResponse* whose type depends on the validation result.  If validation is successful, an ACK response is sent otherwise it sends a REJECT response.
+
+Each valid request is sent to the ingestion handler via its *onNext()* method.
+
+###### ingestion handler
+
+The ingestion handler framework is the "meat" of the Ingestion Service implementation.  It uses a simple interface [IngestionHandlerInterface](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/handler/IngestionHandlerInterface.java) to define the required handler methods *init()*, *fini()*, *start()*, *stop()*, *validateIngestionRequest()*, and *onNext()*.
+
+An interfaced is used so that we can have multiple handler implementations and use injection at runtime to configure a running system.  This is probably more useful for creating mock implementations for testing than alternative real implementations.  However, I wanted to test different approaches to the handler implementation using both sync and async MongoDB drivers so the interface was helpful in accomplishing that objective.
+
+There are two primary implementations of the handler interface, both using MongoDB to store time series and metadata.  [MongoSyncHandler](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/handler/mongo/MongoSyncHandler.java) uses the sync MongoDB driver, while [MongoAsyncHandler](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/handler/mongo/MongoAsyncHandler.java) uses the "reactivestreams" async MongoDB driver.  Both classes extend [MongoHandlerBase](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/handler/mongo/MongoHandlerBase.java) to take advantage of sharing common code that is useful for both implementations.
+
+*MongoHandlerBase* defines an abstract method interface that must be implemented by derived classes.  These methods are used to isolate behavior that is different between the sync and async MongoDB drivers.  The most interesting method is *insertBatch()*, which inserts the batch of BSON documents for a given *IngestionRequest* to MongoDB.  There are other methods for initializing the driver client, database, and collection; creating indexes on collections, and inserting a document to the request status collection.
+
+The primary methods of the handler interface implemented by *MongoHandlerBase* are *validateIngestionRequest()* and *onNext()*.  
+
+The validation method is invoked by the service implementation method for handling incoming ingestion requests.  I decided to try to maintain a separation of concerns where the handler understands the details of an *IngestionRequest* instead of providing validation logic in the service implementation.  The *IngestionServiceImpl* focuses on gRPC communication details and dispatching to the handler.
+
+The *onNext()* method simply adds incoming *IngestionRequests* to the *ingestionQueue*.
+
+*MongoHandlerBase* employs a *producer-consumer-queue* pattern for handling requests.  
+
+The "producer" is the gRPC service implementation which receives *IngestionRequests* in gRPC framework threads and adds them to the handler's queue via the *onNext()* method.
+
+The "consumer" is the pool of worker tasks running in an *ExecutorService* managed by *MongoHandlerBase*.  It creates a fixed size thread pool for the executor service with the configured number of *IngestionWorkers*.  The nested class *IngestionWorker* implements the *Runnable* interface for executing a task asynchronously.  The worker's *run()* method polls the queue to wait for the next ingestion request, and handles the request via *handleIngestionRequest()*.
+
+*handleIngestionRequest()* uses the utility method *generateBucketsFromRequest()* to create a list of BSON documents from the ingestion request, with on document per column in the request.  It then calls the abstract method *insertBatch()* to write the batch to MongoDB (with derived classes using the sync or async mongo driver to write to the database), and handles the result in a uniform way.  It also adds a document to the requestStatus MongoDB collection indicating the disposition of the request.
+
+One tricky aspect of the handler implementation is that it is not straightforward to map a polymorphic Java class to a single MongoDB collection.  MongoDB provides a *codec* mechanism for mapping Java *POJO* classes to Mongo collections.  I did some research and ended up using a Java class hierarchy rooted by [BucketDocument](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/model/bson/BucketDocument.java), with the *BsonDiscriminator* attribute used so that MongoDB can distinguish the various subclasses.  *BucketDocument* is a generic type, with a type parameter for specifying the Java type of the data to be stored in a bucket.
+
+There are derived classes *DoubleBucketDocument*, *LongBucketDocument*, *BooleanBucketDocument*, and *StringBucketDocument*, each of which specify a different value for the BsonDiscriminator annotation and the corresponding Java type to fulfill the type parameter in the parent *BucketDocument* class (e.g., *Double*, *Long*, *Boolean, *String*).
+
+The MongoDB *codec* mechanism then can map this polymorphic bucket document hierarchy to a single collection, "buckets".  Each document in that collection includes a "dataType" whose value is determined by the BsonDiscriminator annotation value for the derived bucket document class, e.g., "dataType: 'DOUBLE'".  See the appendix section "mongodb schema" for more details.
+
+###### configuration
+
+I created a simple configuration mechanism, [ConfigurationManager](https://github.com/osprey-dcs/dp-common/blob/main/src/main/java/com/ospreydcs/dp/common/config/ConfigurationManager.java) in the repo [dp-common](https://github.com/osprey-dcs/dp-common).  I created this new repo so that I can share Java components with both the Ingestion and Query Services.  The dependency is accomplished via configuration in the project's "pom.xml" file.
+
+The *ConfigurationManager* uses [snakeyaml](https://bitbucket.org/snakeyaml/snakeyaml/src/master/) to parse config files in YML format.
+
+The *singleton* pattern is used to access the *ConfigurationManager* instance for the running service.  Lazy initialization is used to create and initialize the instance in a thread-safe way.
+
+Initialization looks for the default config file "application.yml" in the class loader path.  It flattens the configuration details to a map whose keys are configuration properties (using dot notation) and values are the configuration resource values as strings.
+
+An alternate config file can be specified on the command line (using e.g., "java -Ddp.config=/tmp/config-override.yml com.ospreydcs.dp.ingest.server.IngestionGrpcServer") or via an environment variable (DP.CONFIG=/tmp/config-override.yml).
+
+Individual config resources can be overridden on the command line (e.g., "java -Ddp.GrpcServer.port=50052 com.ospreydcs.dp.ingest.server.IngestionGrpcServer").  Command line overrides take precedence over config file entries.
+
+The main objectives employed in the interface for retrieving config resource values are:
+
+* Minimize the need for clients to check the results from config lookup methods.  To me this means 1) don't throw exceptions but instead return null values for missing keys and 2) provide methods for specifying a default value that is return instead of a null.  This way the caller never has to check the result of config lookup.
+
+* Provide getter methods for casting the config value to a certain data type e.g., getConfigInt() and getConfigBoolean().  This also minimizes code in the client to cast return values (and catch resulting exceptions etc).
+
+A convenience method *configMgr()* is used in service classes to return *ConfigurationManager.getInstance()*.  A typical call in the service to access a config resource then looks like this:
+
+```
+int numWorkers = configMgr().getConfigInteger(CFG_KEY_NUM_WORKERS, DEFAULT_NUM_WORKERS);
+```
+
+###### grpc protocol definition
+
+The gRPC API definition for the Ingestion Service is defined in the [dp-grpc github repo](https://github.com/osprey-dcs/dp-grpc) in the file [ingest.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/ingestion.proto).  The API spec is discussed elsewhere in this document.
+
+The *dp-grpc* project uses the Java *protoc* compiler to build Java classes implementing the gRPC API.  The *dp-ingest* project includes a dependency in its "pom.xml" file to include those derived artifacts.
+
+###### ingestion benchmark application
+
+The class [IngestionPerformanceBenchmark](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/benchmark/IngestionPerformanceBenchmark.java) provides a simple performance benchmark application that is used to monitor the performance of the Ingestion Service implementation during development.  It is run via *main()*.
+
+The base data set for the ingestion performance benchmark includes 4,000 data sources sampled at 1 KHz for 60 seconds.
+
+The *main()* method uses *streamingIngestionExperiment()* to execute a set of scenarios for sweeping parameters that control behavior in the client, number of threads and number of data streams, looking for "optimal" values.  Each scenario is executed by *streamingIngestionScenario()*. 
+
+That method creates an ExecutorService with a fixed size thread pool of the specified number of threads.  It then creates a set of executor service tasks of the specified number of streams, essentially dividing the total set of data to be ingested across those tasks, and executes the tasks via the executor service thread pool.
+
+Each task is run via *sendStreamingIngestionRequest()*.  It creates a responseObserver, opens the *streamingIngestion()* API RPC method stream, sends a stream of *IngestionRequest* messages (determined by the parameters for the scenario), and waits for the expected number of responses.
+
+The performance benchmark application measures and reports elapsed time for each scenario.  I tried to exclude as much processing as possible from the time measurement, however it does include the time required to generate each gRPC *IngestionRequest* message.  I hoped to avoid this, but the application runs out of memory if I try to preallocate the messages.  One workaround is to preallocate a single IngestionRequest message that is sent repeatedly.  The gRPC performance benchmark in the dp-benchmark repo takes this approach.
+
+###### unit test coverage
+
+The dp-ingest project includes pretty thorough jUnit test coverage in its "test/java" hierarchy, with packages that mirror the source directory structure and test class names that reflect the name of the class under test.
+
+[IngestionServiceImplTest](https://github.com/osprey-dcs/dp-ingest/blob/main/src/test/java/com/ospreydcs/dp/ingest/service/IngestionServiceImplTest.java) covers utility methods in *IngestionServiceImpl* for sending ACK and REJECT responses, and converting a gRPC *Timestamp* to a Java *Date*.
+
+[IngestionGrpcTest](https://github.com/osprey-dcs/dp-ingest/blob/main/src/test/java/com/ospreydcs/dp/ingest/server/IngestionGrpcTest.java) runs a simple gRPC client-server scenario to test gRPC communication, using *io.grpc.inprocess.InProcessServerBuilder* and *InProcessChannelBuilder* for running both in the same process.  It includes two simple test cases, one for a rejected ingestion request and the other for a valid ingestion request.  Both cases verify properties of the response received.
+
+[IngestionHandlerBaseTest](https://github.com/osprey-dcs/dp-ingest/blob/main/src/test/java/com/ospreydcs/dp/ingest/handler/IngestionHandlerBaseTest.java) covers the validation utility method *IngestionHandlerBase.validateIngestionRequest()* with various scenarios that lead to validation errors.
+
+[MongoSyncHandlerTest](https://github.com/osprey-dcs/dp-ingest/blob/main/src/test/java/com/ospreydcs/dp/ingest/handler/mongo/MongoSyncHandlerTest.java) and [MongoAsyncHandlerTest](https://github.com/osprey-dcs/dp-ingest/blob/main/src/test/java/com/ospreydcs/dp/ingest/handler/mongo/MongoAsyncHandlerTest.java) cover using the MongoDB sync and async drivers via *MongoSyncHandler* and *MongoAsyncHandler*, respectively.  They are both derived from the common class [MongoHandlerTestBase](https://github.com/osprey-dcs/dp-ingest/blob/main/src/test/java/com/ospreydcs/dp/ingest/handler/mongo/MongoHandlerTestBase.java), which provides the implementation of the test case methods used by both derived classes.  The test cases cover various success and error scenarios in the handler.  Test cases retrieve data from MongoDB to verify the test results.  The two derived classes use the appropriate sync or async MongoDB code for retrieving data.
+
+[IngestionConfigurationmanagerTest](https://github.com/osprey-dcs/dp-ingest/blob/main/src/test/java/com/ospreydcs/dp/ingest/config/IngestionConfigurationManagerTest.java) covers use of the *ConfigurationManager* within the Ingestion Service.  It includes test cases that check for handling and default values for three ingestion components that use config resources, server, handler, and benchmark.
 
 ## mongodb schema
 
