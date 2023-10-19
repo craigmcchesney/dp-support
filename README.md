@@ -149,12 +149,186 @@ rpc streamingIngestion (stream IngestionRequest) returns (stream IngestionRespon
 
 This is the primary method for data ingestion.  It is a bidirectional streaming RPC method.  It accepts a stream of *IngestionRequest* messages, and returns a stream of *IngestionResponse* messages, one for each request.
 
-##### unaryIngestion():
+###### streamingIngestion() inputs
+
+Each *IngestionRequest* message sent in the input stream contains a *DataTable* object to be ingested, along with some descriptive attributes.  These data structures are described in more detail below.
+
+###### streamingIngestion() processing
+
+The Ingestion Service performs initial validation on each request in the stream, and replies immediately with *IngestionResponse* message  indicating acknowledgement for a valid request, or rejection of an invalid one.  The request is then added to a queue for ingestion handling.
+
+The ingestion handling of each request in the stream is performed asynchronously.  The Ingestion Service writes data from the request to the "buckets" collection in MongoDB, adding one document to the bucket for each "column" of data in the request.
+
+A separate MongoDB "requestStatus" collection is used to note the processing status of each request, with a document for each handled request.  The collection is keyed by the *clientRequestId* specified in the *IngestionRequest*.  This collection can be used by an administrative monitoring process to detect and notify about errors in the ingestion process.
+
+More details about the MongoDB schema for time series data, metadata, and request status can be found in the appendix of this document.
+
+###### streamingIngestion() outputs
+
+The method returns a stream of *IngestionResponse* messages, one per request.  Each response includes providerId and clientRequestId for use by the client in mapping to the request object.  The response message only indicates if validation succeeded or failed.  Because ingestion handling is performed asynchronously, the MongoDB "requestStatus" collection must be used to determine the success or failure of individual requests.  The TODO list includes a task for building an API to facilitate status queries.
+
+##### unaryIngestion()
+
+This API is not yet implemented.  It is anticipated that the behavior will be exactly the same as for the *streamingIngestion()* method, except that the method supports sending a single request and receiving a single response.  The response and processing performed will be the same as for the streaming case.
+
+#### ingestion service API data structures
+
+Primary data structures for the Ingestion Service API are detailed below.  See  [ingestion.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/ingestion.proto) and  [common.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/common.proto) for definitions of secondary data structures.
+
+##### IngestionRequest
+
+```
+message IngestionRequest {
+  uint32 providerId = 1;
+  string clientRequestId = 2;
+  Timestamp requestTime = 3;
+  repeated Attribute attributes = 4;
+  EventMetadata eventMetadata = 5;
+  DataTable dataTable = 6;
+}
+```
+
+This is the request data structure for the two data ingestion API methods.
+
+* providerId: (required) Unique integer identifier for provider clients.  There is a TODO list task to add an API for registering providers with metadata.  For now, the client must use a unique integer to identify each provider that it wants to distinguish.
+
+* clientRequestId: (required) An identifier provided by the client to distinguish requests sent by a given provider.
+
+* requestTime: (required) Time that request was generated.  Required for analytics.
+
+* attributes: (optional) List of key/value metadata tags.
+
+* eventMetadata: (optional) Event-related metadata.
+
+* dataTable: (required) Contains the data to be ingested.
+
+##### EventMetadata
+
+```
+message EventMetadata {
+  Timestamp eventTimestamp = 1;
+  string eventDescription = 2;
+}
+```
+
+This structure encapsulates metadata about an event with which the *IngestionRequest* data are associated.
+
+* eventTimestamp: The time of the event, such as a trigger or synchronization time.
+
+* eventDescription: Textual description of the event.
+
+##### DataTable
+
+```
+message DataTable {
+  DataTimeSpec dataTimeSpec = 1;
+  repeated DataColumn dataColumns = 2;
+}
+```
+
+Contains the data to be ingested for an *IngestionRequest*.
+
+* dataTimeSpec: Contains details about the timestamps for the data columns.  Supports specifying both fixed and irregular sample intervals, though currently only the fixed interval is supported.
+
+* dataColumns: A list of column objects, each of which contains a column name and list of data values.
+
+##### DataTimeSpec
+
+```
+message DataTimeSpec {
+  oneof value_oneof {
+    FixedIntervalTimestampSpec fixedIntervalTimestampSpec = 1;
+    TimestampList timestampList = 2;
+  }
+}
+```
+
+Supports two different approaches for specifying the timestamps for the corresponding column data.  *FixedIntervalTimestampSpec* is used for a fixed sampling interval, and an explicit list of *Timestamp* objects is provided for an inreggular sampling interval.
+
+##### FixedIntervalTimestampSpec
+
+```
+message FixedIntervalTimestampSpec {
+  Timestamp startTime = 1;
+  uint64 sampleIntervalNanos = 2;
+  uint32 numSamples = 3;
+}
+```
+
+Used to specify timestamp details for an *IngestionRequest* with a fixed sample interval.
+
+* startTime: Specifies timestamp for first data value in each column of the request.
+
+* sampleIntervalNanos: Specifies the sampling frequency in nanoseconds for subsequent data values in each column.
+
+* numSamples: Specifies the number of data values provided in each column.
+
+
+##### DataColumn
+
+```
+message DataColumn {
+  string name = 1;
+  repeated DataValue dataValues = 2;
+}
+```
+
+Contains the data for a particular column in the request.
+
+* name: Column name.
+
+* dataValues: List of *DataValue* objects, one for each column data value.
+
+##### DataValue
+
+```
+message DataValue {
+
+  oneof value_oneof {
+    string stringValue = 1;             // String value
+    double floatValue = 2;              // floating point value
+    uint64 intValue = 3;                // integer value
+    bytes byteArrayValue = 4;           // byte array value
+    bool booleanValue = 5;              // boolean value
+    Image image = 6;                    // image value
+    Structure structureValue = 7;      // structure value
+    Array arrayValue = 8;              // Array value
+  }
+```
+
+Contains a single column data value.  Uses the gRPC "oneof" mechanism to specify column data values of heterogeneous types.  Each supported data type is enumerated.  One implication of this approach is that it allows a single column to contain values with different data types.  Currently the Ingestion Service will reject a request containing columns whose data includes more than one data type.  That restriction can be removed if this is deemed to be a useful feature.  It's not a simple change however, as it would be complicated to map the Java data structure to a MongoDB BSON document.
+
+##### IngestionResponse
+
+```
+message IngestionResponse {
+
+  uint32 providerId = 1;
+  string clientRequestId = 2;
+  ResponseType responseType = 3;
+  Timestamp responseTime = 4;
+
+  oneof details_oneof {
+    AckDetails ackDetails = 10;
+    RejectDetails rejectDetails = 11;
+  }
+}
+```
+
+Encapsulates a response from the Ingestion Service to an individual *IngestionRequest*.  Each request in the *streamingIngestion()* input stream receives an *IngestionResponse* in the output stream.
+
+* providerId: Echos providerId specified in the request.
+
+* clientRequestId: Echos clientRequestId specified in the request.
+
+* responseType: Uses *ResponseType* enum to specify the type of response, either ACK or REJECT.  Note that an ACK response doesn't necessarily mean that ingestion is successful, only that the request passed validation that it was properly formed.  Ingestion is performed asynchronously and the final disposition of the request is noted in the MongoDB "requestStatus" collect, which contains a single status document per *IngestionRequest* that is processed by the ingestion handler.  A REJECT response indicates that a request is not properly formed.
+
+* responseTime: Timestamp that response is generated.
+
+* details: Uses gRPC "oneof" mechanism to include either *AckDetails* or *ResponseDetails* depending on type of response.  *AckDetails* includes the number of rows and columns specified in the request, which can be used by the client for error checking.  *RejectDetails* includes a message and enum indicating reason for rejection.
 
 ### query service API
 TODO (for now, see [query.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/query.proto))
-
-### common.proto
 
 ## service configuration
 
