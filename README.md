@@ -1,4 +1,5 @@
 # overview
+
 This repo includes support for installing and managing the Data Platform and surrounding ecosystem.
 
 The Data Platform provides tools for managing the data captured in an experimental research facility, such as a particle accelerator.  The data are used within control systems and analytics applications, and facilitate the creation of machine learning models for those applications.
@@ -6,24 +7,28 @@ The Data Platform provides tools for managing the data captured in an experiment
 The Data Platform is agnostic to the source and acquisition of the data.  A project goal is to manage data captured from the [EPICS "Experimental Physics and Industrial Control System"](https://epics-controls.org/), that use of EPICS is not required.  The Data Platform APIs are generic and can be used from essentially all programming languages and any type of application.
 
 # performance
+
 A key requirement of the Data Platform is ingesting data at rates suitable for use in an environment such as a particle accelerator.  One baseline performance goal is to ingest data from 4,000 sources sampling at a rate of 1 KHz, or 4 million samples per second.
 
 # data platform components
+
 The core Data Platform contains two primary components, an Ingestion Service and a Query Service.  Each of those services provides a gRPC-based API that can be used directly to build client applications in a variety of programming languages.  Alternatively, we plan to provide higher level libraries for building client applications using languages like Java, Python, and C++.
 
 # technology stack and ecosystem
+
 A primary technology used building the Data Platform is the [gRPC open-source high-performance remote procedure call (RPC) framework](https://grpc.io/).  As described on [Wikipedia](https://en.wikipedia.org/wiki/GRPC), "this framework was originally developed by Google for use in connecting microservices.  It uses HTTP/2 for transport, protocol buffers as the interface description languages, and provides features such as authentication and bidirectional streaming.  It generates cross-platform client and server bindings for many languages."
 
 The other primary technology element is [MongoDB](https://www.mongodb.com/).  MongoDB is an open source document / NoSQL database management system.  Instead of using tables like a traditional relational database, it manages data in JSON-like documents.  The Ingestion and Query Services utilize MongoDB to store and retrieve data in fulfillment of client API requests.
 
 # status
+
 - A prototype implementation was built focusing on the creation of a general API supporting [ingestion](https://github.com/osprey-dcs/datastore) and [query](https://github.com/osprey-dcs/datastore-service) of heterogeneous data types including scalar, array / table, structure, and image.  Service implementations were created using Java for both the Ingestion and Query Services, as well as libraries for building client applications.  The prototype technology stack included both [InfluxDB](https://www.influxdata.com/) (for time series data) and MongoDB (for metadata).  This prototype did not meet the project goal for ingestion performance.
 - A prototype web application was created using JavaScript React.js and using the gRPC query API.
 - Performance benchmark applications were developed and executed to evaluate candidate technologies for use in the Data Platform implementation in light of the project performance goal stated above.  Benchmarks focused on gRPC for API communication; InfluxDB, MongoDB and MariaDB for database storage; and writing JSON and HDF5 files to disk.  The benchmark results showed that it was likely we could build service implementations meeting our performance requirements by using gRPC for communication and [MongoDB for storing "buckets" of time series data](https://dev.to/hpgrahsl/a-slightly-closer-look-at-mongodb-5-0-time-series-collections-part-1-32m6).
 - An initial Java implementation of the Ingestion Service providing a gRPC API and using MongoDB for storing time-series data was built.  It is accompanied by a performance benchmark application that is used at each stage of development to measure performance relative to the project goal.  The initial implementation exceeds our goal by a comfortable margin, but this will continue to be a focus as the project evolves.
 
-
 # todo and roadmap
+
 - The next step in development is to build an initial implementation of the Query Service that provides a gRPC API and uses the MongoDB schema created by the Ingestion Service to fulfill client query requests.
 - The initial implementation of the Ingestion Service supports scalar data types including float, integer, string, and boolean data.  Additional work is required to support arrays/tables, structures, and images.
 - Ingestion Service features:
@@ -43,6 +48,7 @@ The other primary technology element is [MongoDB](https://www.mongodb.com/).  Mo
 - Potential directions include migration of time-series data from MongoDB to HDF5 files, storing protobuf data directly in MongoDB or data files, and horizontal scaling using an approach such as [Kubernetes](https://kubernetes.io/).
 
 # repos
+
 - [dp-grpc](https://github.com/osprey-dcs/dp-grpc) - Includes the gRPC API definition for the Ingestion and Query Services (in "proto" files).
 - [dp-common](https://github.com/osprey-dcs/dp-common) - Includes features in common to both the Ingestion and Query Services, such as the configuration mechanism.
 - [dp-ingest](https://github.com/osprey-dcs/dp-ingest) - Includes the initial implementation of the Ingestion Service, as well as the performance benchmark application.
@@ -52,9 +58,11 @@ The other primary technology element is [MongoDB](https://www.mongodb.com/).  Mo
 # installation
 
 ## prerequisites
+
 The primary prerequisite for installing the Data Platform is installation of MongoDB.  Mongo-express is a web portal for navigating a MongoDB platform, and can be extremely useful during development and testing, and it's installation is optional.
 
 ### mongodb
+
 MongoDB installation is required to use the Data Platform.  Installation will vary by platform and instructions for doing so should be fairly easy to find.  For installing on Ubuntu Linux 22.04 and similar platforms, I've found [these instructions](https://tecadmin.net/how-to-install-mongodb-on-ubuntu-22-04/) to be helpful.
 
 It is also possible (and relatively simple) to run MongoDB from a docker container.  While probably not appropriate for a production installation or system under heavy load, this approach might be useful for development, evaluation, and other applications.  The [official site includes instructions for doing so](https://www.mongodb.com/compatibility/docker).
@@ -88,6 +96,7 @@ module.exports = {
 ```
 
 ## development installation
+
 Developer installation consists of cloning the first 3 github repos listed above. The dp-support repo is optional, and the dp-benchmark is probably not useful unless you are interested in performance benchmarks outside the Data Platform).  After cloning the repos, use maven to "install" the dp-grpc and dp-common projects (either from the command line or using your Java IDE).  Then use maven to compile the dp-ingest project.
 
 There is no requirement for the directory structure used, however, the dp-support repo will probably make some assumptions about the directory structure for a deployed system.  I'm using the convention of a root deployment directory "~/dp" with subdirectories "~/dp/dp-support" (where the dp-support repo is cloned), and "~/dp/dp-java" (where the 3 java repos are cloned).  This will probably be reflected in the scripts and utilites created in dp-support.
@@ -97,6 +106,7 @@ To run the ingestion service, execute IngestionGrpcServer.main().  To run the pe
 There are jUnit tests for the elements of the service in dp-ingest/src/test/java.
 
 ## production installation
+
 TODO: create "fat" jars and make them available via the github "releases" mechanism.  Create scripts etc for managing ecosystem services in such an environment.
 
 # using the data platform
@@ -327,7 +337,14 @@ Encapsulates a response from the Ingestion Service to an individual *IngestionRe
 
 * details: Uses gRPC "oneof" mechanism to include either *AckDetails* or *ResponseDetails* depending on type of response.  *AckDetails* includes the number of rows and columns specified in the request, which can be used by the client for error checking.  *RejectDetails* includes a message and enum indicating reason for rejection.
 
+#### ingestion service API client examples
+
+For now, see the ingestion performance benchmark application [IngestionPerformanceBenchmark](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/benchmark/IngestionPerformanceBenchmark.java). *prepareIngestionRequest()* demonstrates building an *IngestionRequest* in Java.  *sendStreamingIngestionRequest()* demonstrates calling the bidirectional streaming API *streamingIngestion()*, including creating a response stream observer, RPC invocation, and result handling.
+
+TODO: develop this section further to contain direct examples.
+
 ### query service API
+
 TODO (for now, see [query.proto](https://github.com/osprey-dcs/dp-grpc/blob/main/src/main/proto/query.proto))
 
 ## service configuration
@@ -519,7 +536,7 @@ The initial development milestone focused on building an implementation of the I
 
 Because of the focus on performance in this milestone, an ingestion performance benchmark application was created to measure performance at each step of the development process to see where we stand relative to the goal of 4M values/second.  The benchmark application sends one minute's data for 4,000 PVs each sampled at 1KHz, and is discussed in more detail below.
 
-At completion of this milestone, the ingestion performance benchmark ranges from 7M to 10M values/second.
+At completion of this milestone, the ingestion performance benchmark ranges from 7M to 10M values/second.  It is interesting to note that this is the same performance range that we observed for writing data directly to MongoDB, which means that our server overhead doesn't seem to degrade performance significantly.  We will see if that holds as we add more functionality, and under more stressful load testing.
 
 ##### ingestion service implementation
 
