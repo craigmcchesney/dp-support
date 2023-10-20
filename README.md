@@ -403,6 +403,7 @@ All benchmarks follow the same general pattern:
 ##### results summary
 
 | benchmark description            | result (values / sec)  |
+| -------------------------------- | ---------------------- |
 | gRPC network communication       | 22M to 33M             |
 | time series, bucket - HDF5 large | 68M - 77M              |
 | time series, bucket - JSON files | 38M - 47M              |
