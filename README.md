@@ -376,31 +376,82 @@ TODO: details for running the Ingestion and Query Services.
 
 ### development milestones
 
-#### October 2023: initial ingestion service implementation for scalar data using mongodb for time series data
+#### July 2023: performance benchmarking of gRPC communication and persistence technology alternatives
 
-##### performance benchmarking
+##### overview
 
-The first data platform development milestone focused on building an ingestion service implementation handling scalar data types (float, integer, string, and boolean) that exceeds the project performance goal of capturing data for 4,000 data sources at a sampling rate of 1 KHz (or 4M scalar values/second).
+A primary performance goal for the re-implemented data platform is an ingestion service implementation handling scalar data types (float, integer, string, and boolean) that captures data for 4,000 data sources at a sampling rate of 1 KHz (or 4M scalar values/second).
 
-Performance benchmarks were developed to investigate the performance of technologies used in the initial Ingestion Service prototype implementation (gRPC, InfluxDB, and MongoDB), as well as some alternatives including MariaDB as well as HDF5 and JSON file storage.  
+Performance benchmarks were developed to investigate the performance of technologies used in the initial Ingestion Service prototype implementation (gRPC, InfluxDB, and MongoDB), as well as some alternatives including MariaDB as well as HDF5 and JSON file storage.  These benchmarks focus only on ingestion performance, a follow up study will look at query performance.
 
-Benchmark results showed that gRPC communication provided ample headroom beyond the project performance requirements.  
+Though the Ingestion Service manages both time series data and metadata, the performance benchmarks focus on storing time series data since it is a much more significant technical challenge.
+
+A primary goal for each of the benchmarks is to avoid measuring the time for any processing beyond transmitting data (in the case of the gRPC benchmark) and storing data (for the persistence technologies).  To that end, the benchmarks applications create static data for testing before the performance measurement begins.
+
+To the extent possible for the persistence technology benchmarks, I tested saving time series data both storing individual points and batching the points into "buckets", where a database record or file is created that contains a set of data values corresponding to a specific time range.  I didn't test both approaches for all the technologies, e.g., InfluxDB only stores individual points, and I only tested writing bucketed data to HDF5 and JSON files because writing files containing only an individual point doesn't make much sense.
+
+All benchmarks follow the same general pattern:
+
+* Create batches of data for use in the benchmark where each batch is a list of objects appropriate for the particular test (tables of double values for gRPC, "line protocol" strings for InfluxDB, Bson documents for MongoDB, Json strings for JSON files, and Java Pojos for HDF5 and MariaDB).
+
+* Create thread pool tasks to perform the work to be measured by the benchmark by processing a batch of items (e.g., insert records to database, write data to files, transmit data from client to server).
+
+* Run an individual benchmark scenario by creating thread pool and invoking tasks to process batches of objects, measuring duration of scenario, specifying batch size for each task, number of threads for thread pool, and data dimensions.
+
+* Run an experiment to vary settings like batch size and number of threads for fixed data dimensions to find the "optimal" settings.
+
+##### results summary
+
+| benchmark description            | result (values / sec)  |
+| gRPC network communication       | 22M to 33M             |
+| time series, bucket - HDF5 large | 68M - 77M              |
+| time series, bucket - JSON files | 38M - 47M              |
+| time series, bucket - MongoDB    | 7M - 11M               |
+| time series, bucket - MariaDB    | 4.5M - 5.5M            |
+| time series, bucket - HDF5 small | 1.3M - 2.4M            |
+| time series, points - InfluxDB   | 750K - 940K            |
+| time series, points - MongoDB    | 360K - 410K            |
+| time series, points - MariaDB    | 140K - 162K            |
+
+Each of the individual performance benchmarks is discussed in more detail below.
+
+##### gRPC
+
+Benchmark results showed that gRPC communication provided ample headroom beyond the project performance requirements.
+
+##### InfluxDB
 
 InfluxDB, used in the prototype implementation for storing time series data, performed well in the benchmark but topped out at about 1M values/second (using the core community product without scaling).
 
+##### MariaDB
+
 MariaDB, a relational database platform alternative, performed well in the benchmark for storing time series data, but also topped out under 1M values per second (storing time series data points as database rows).
+
+##### MongoDB
 
 For MongoDB, I developed performance benchmarks for storing time series data as individual points, as well as using "bucketed time series data" (storing a collection of points in a single MongoDB "document").  Using the bucketed data approach showed performance exceeding the performance goal by a comfortable margin.
 
+##### HDF5 and JSON files
+
+##### summary and revision to data platform technology stack
+
 Based on the benchmark results, we decided to move forward with an Ingestion Service implementation using gRPC for communication, and MongoDB for storage of both time series data and metadata.
 
-An ingestion performance benchmark application was created to measure performance at each step of the development process to see where we stand relative to the goal of 4M values/second.  The benchmark application sends one minute's data for 4,000 PVs each sampled at 1KHz.
+#### October 2023: initial ingestion service implementation for scalar data using mongodb for time series data
 
-At completion of this milestone, the performance benchmark ranges from 7M to 10M values/second.
+##### milestone objective
+
+Given the performance benchmark results discussed elsewhere in this document, we decided to move forward in re-development of the Ingestion and Query Services using a revised technology stack that uses gRPC for API communication and MongoDB for storing both time series data and metadata.
+
+The initial development milestone focused on building an implementation of the Ingestion Service that exceeds the project performance goal of ingesting 4M scalar values per second using MongoDB for persistence of all data.  Because the focus is on performance, the initial implementation provides a subset of the features that we will ultimately provide in the Ingestion Service, handling only scalar data (Float, Integer, String, Boolean) using a fixed sampling interval.  Only the bidirectional streaming API RPC method *streamingIngestion()* is implemented by the service.  Additional ingestion features will be enabled in subsequent milestones.
+
+Because of the focus on performance in this milestone, an ingestion performance benchmark application was created to measure performance at each step of the development process to see where we stand relative to the goal of 4M values/second.  The benchmark application sends one minute's data for 4,000 PVs each sampled at 1KHz, and is discussed in more detail below.
+
+At completion of this milestone, the ingestion performance benchmark ranges from 7M to 10M values/second.
 
 ##### ingestion service implementation
 
-The Ingestion Service implementation includes three main elements: the server machinery, the gRPC service implementation, and an ingestion handler.  Each element is described in more detail below.
+The Ingestion Service implementation includes three main elements: 1) a server that listens on the configured port, 2) a gRPC service implementation that handles incoming gRPC messages and dispatches them to the handler, and 3) an ingestion handler that writes data to MongoDB.  Each element is described in more detail below.
 
 The packages and classes for the Ingestion Service are contained in the [dp-ingest github repo](https://github.com/osprey-dcs/dp-ingest).
 
@@ -426,7 +477,7 @@ Each valid request is sent to the ingestion handler via its *onNext()* method.
 
 The ingestion handler framework is the "meat" of the Ingestion Service implementation.  It uses a simple interface [IngestionHandlerInterface](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/handler/IngestionHandlerInterface.java) to define the required handler methods *init()*, *fini()*, *start()*, *stop()*, *validateIngestionRequest()*, and *onNext()*.
 
-An interfaced is used so that we can have multiple handler implementations and use injection at runtime to configure a running system.  This is probably more useful for creating mock implementations for testing than alternative real implementations.  However, I wanted to test different approaches to the handler implementation using both sync and async MongoDB drivers so the interface was helpful in accomplishing that objective.
+An interface is used so that we can have multiple handler implementations and use injection at runtime to configure a running system.  This is probably more useful for creating mock implementations for testing than alternative real implementations.  However, I wanted to test different approaches to the handler implementation using both sync and async MongoDB drivers so the interface was helpful in accomplishing that objective.
 
 There are two primary implementations of the handler interface, both using MongoDB to store time series and metadata.  [MongoSyncHandler](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/handler/mongo/MongoSyncHandler.java) uses the sync MongoDB driver, while [MongoAsyncHandler](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/handler/mongo/MongoAsyncHandler.java) uses the "reactivestreams" async MongoDB driver.  Both classes extend [MongoHandlerBase](https://github.com/osprey-dcs/dp-ingest/blob/main/src/main/java/com/ospreydcs/dp/ingest/handler/mongo/MongoHandlerBase.java) to take advantage of sharing common code that is useful for both implementations.
 
