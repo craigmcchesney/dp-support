@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+echo
+echo '================================================================'
+echo 'server-stop-ingest'
+echo '================================================================'
+echo
+
+# source ~/dp/dp-support/env/dp-env
+
+SVC_NAME='dp-ingest'
+
+echo "service name: $SVC_NAME"
+
+./util-pm-stop \'"$SVC_NAME"\'

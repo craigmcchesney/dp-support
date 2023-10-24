@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+
+echo
+echo '================================================================'
+echo 'server-start-ingest'
+echo '================================================================'
+echo
+
+# source ../env/dp-env
+
+SVC_NAME='dp-ingest'
+
+# using parens to expand punctuation charactersince double quoting doesn't expand it, alternative is to use:
+# eval LOCKFILE="../var/lock/$SVC_NAME.pid"
+# which could be dangerous if the value is entered by the user
+APP_JAR=( ../lib/dp-ingest.jar )
+
+APP_CMD="java -jar $APP_JAR"
+
+echo "svc_name: $SVC_NAME"
+echo "app_cmd: $APP_CMD"
+
+# check java home
+test -z "$JAVA_HOME" && { echo "fatal error: JAVA_HOME variable is not set"; exit 1; }
+
+# check for presence of jar
+test -f "$APP_JAR" || { echo "$APP_JAR not found"; exit 1; }
+
+# surround params in single quotes to encapsulate spaces in values etc
+./util-pm-start \'"$SVC_NAME"\' \'"$APP_CMD"\' || { echo "util-pm-start failed"; exit 1; }
+
