@@ -1,7 +1,5 @@
 var/log/*.log
 var/lock/*.pid
 
-/bin/HDFView/
-
 .idea
 
