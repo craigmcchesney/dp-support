@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+
+echo
+echo '================================================================'
+echo 'app-run-ingestion-benchmark'
+echo '================================================================'
+echo
+
+# source ../env/dp-env
+
+APP_NAME='ingestion-benchmark'
+
+APP_JAR=( ../lib/dp-ingest.jar )
+APP_CONFIG=( ../config/dp-ingest.yml )
+LOG4J_CONFIG=( ../config/log4j2.xml )
+
+APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -cp $APP_JAR com.ospreydcs.dp.ingest.benchmark.IngestionPerformanceBenchmark"
+
+echo "app_name: $SVC_NAME"
+echo "app_cmd: $APP_CMD"
+
+# check java home
+test -z "$JAVA_HOME" && { echo "fatal error: JAVA_HOME variable is not set"; exit 1; }
+
+# check for presence of jar
+test -f "$APP_JAR" || { echo "$APP_JAR not found"; exit 1; }
+
+# surround params in single quotes to encapsulate spaces in values etc
+# ./util-pm-run \'"$APP_NAME"\' \'"$APP_CMD"\' || { echo "util-pm-run failed"; exit 1; }
+
+eval "$APP_CMD"
+

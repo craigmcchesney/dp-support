@@ -1,5 +1,5 @@
 var/log/*.log
-var/lock/*.lock
+var/lock/*.pid
 
 /bin/HDFView/
 
