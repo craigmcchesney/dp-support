@@ -15,8 +15,10 @@ SVC_NAME='dp-ingest'
 # eval LOCKFILE="../var/lock/$SVC_NAME.pid"
 # which could be dangerous if the value is entered by the user
 APP_JAR=( ../lib/dp-ingest.jar )
+APP_CONFIG=( ../config/dp-ingest.yml )
+LOG4J_CONFIG=( ../config/log4j2.xml )
 
-APP_CMD="java -jar $APP_JAR"
+APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -jar $APP_JAR"
 
 echo "svc_name: $SVC_NAME"
 echo "app_cmd: $APP_CMD"
