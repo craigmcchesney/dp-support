@@ -228,7 +228,29 @@ In addition to overriding the default config file, individual configuration sett
 
 ## running data platform services
 
-TODO: details for running the Ingestion and Query Services.
+### running the ingestion server application
+
+To run the ingestion server using the dp-support ecosystem scripts in "dp-support/bin", use:
+```
+server-start-ingest
+```
+
+Here is the Java command line to run the server directly (update file paths as appropriate for your installation):
+```
+java -Ddp.config=../config/dp-ingest.yml -Dlog4j.configurationFile=../config/log4j2.xml -jar ../lib/dp-ingest.jar
+```
+
+### running the ingestion performance benchmark application
+
+To run the ingestion performance benchmark application using the dp-support ecosystem scripts in "dp-support/bin", use:
+```
+app-run-ingestion-benchmark
+```
+
+Here is the Java command line to run the application directly (update file paths as appropriate for your installation):
+```
+java -Ddp.config=../config/dp-ingest.yml -Dlog4j.configurationFile=../config/log4j2.xml -cp ../lib/dp-ingest.jar com.ospreydcs.dp.ingest.benchmark.IngestionPerformanceBenchmark
+```
 
 # Data Platform API
 
