@@ -186,7 +186,7 @@ There are jUnit tests for the elements of the service in dp-ingest/src/test/java
 
 ### jar installation
 
-TODO: create "fat" jars and make them available via the github "releases" mechanism.  Create scripts etc for managing ecosystem services in such an environment.
+In situations where the Data Platform code will be used without the ecosystem support provided by this dp-support repo or for Java development, source code and/or jar files can be installed directly by using the desired github release.  Here are links to the releases page for each repo: [dp-grpc](https://github.com/osprey-dcs/dp-grpc/releases), [dp-common](https://github.com/osprey-dcs/dp-common/releases), and [dp-ingest](https://github.com/osprey-dcs/dp-ingest/releases).
 
 # Configuring and Running the Data Platform
 
