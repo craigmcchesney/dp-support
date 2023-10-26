@@ -1,4 +1,50 @@
-# overview
+# data platform quick start
+
+This section will help you get the data platform up and running as quickly as possible.  If you are looking for a full project overview with other installation options, skip to the next section!
+
+## preinstallation
+
+- install Java 16 or 17
+- install MongoDB version 6, create database user and password
+- optionally install mongo-express
+
+## clone dp-support repo
+
+This dp-support repo includes everything needed to run the data platform, including jar files for the Java server applications, configuration files, and scripts to manage the ecosystem.  To clone the repo, change to the desired parent directory for the installation, and use the following command:
+
+```
+git clone https://github.com/osprey-dcs/dp-support.git
+```
+
+Cloning the github repo is a quick way to install the data platform for evaluation purposes, or to jump start a development, test, or production system.  Create a fork of the repo to track your changes to the scripts, make an official branch of the repo if appropriate, or break the connection with git after cloning to go your own direction.
+
+## customize config files
+
+The "dp-support/config" directory includes template config files for the installation.  Minimally, you'll need to edit "dp-ingest.yml" to include the proper "dbUser" and "dbPassword" for your MongoDB installation.  The included log4j config file sets up logging output to the console and can be customized as desired.
+
+## start ecosystem processes
+
+The "dp-support/bin" directory includes a set of scripts for managing the data platform ecosystem.  These can be used to quickly get the system up and running.  Relevant scripts include:
+
+### MongoDB scripts
+- _mongodb-start_: Starts standard MongoDB installation using systemctl.
+- _mongodb-stop_: Stops MongoDB.
+- _mongodb-status_: Checks MongoDB status.
+- _mongodb-enable_: Enables MongoDB auto-start after reboot.
+
+### data platform server scripts
+- _server-start-ingest_: Starts the ingestion server application using the util-pm-start script.
+- _server-stop-ingest_: Stops the running ingestion server application using the util-pm-stop script.
+- _server-status-ingest_: Checks the status of the ingestion server application using util-pm-status.
+
+### other data platform applications
+- _app-run-ingestion-benchmark_: Runs the data platform ingestion service performance benchmark application against the running ingestion server.  Displays an error if the server is not running.  Uploads one minute's data for 4,000 data sources sampled at 1 KHz.  This is a good way to test the installation.  Confirm that data is written to MongoDB by the ingestion server.
+
+## next steps
+
+Read the relevant sections of the Data Platform documentation to learn about options for uploading and retrieving data.
+
+# data platform overview
 
 This repo includes support for installing and managing the Data Platform and surrounding ecosystem.
 
@@ -59,15 +105,19 @@ The other primary technology element is [MongoDB](https://www.mongodb.com/).  Mo
 
 ## prerequisites
 
-The primary prerequisite for installing the Data Platform is installation of MongoDB.  Mongo-express is a web portal for navigating a MongoDB platform, and can be extremely useful during development and testing, and it's installation is optional.
+The primary prerequisites for installing the Data Platform are Java and MongoDB.  Mongo-express is a web portal for navigating a MongoDB platform, and can be extremely useful during development and testing, but it's installation is optional.
 
-### mongodb
+### java installation
+
+The Data Platform Java applications are compiled using Java 16, and have been tested with Java 17.  Newer versions of Java will probably work without issue, so please let us know if you test on any of them before we do our own port.  Here are links for installing [Java 16](https://docs.oracle.com/en/java/javase/16/install/overview-jdk-installation.html) or [Java 17](https://docs.oracle.com/en/java/javase/17/install/overview-jdk-installation.html).
+
+### mongodb installation
 
 MongoDB installation is required to use the Data Platform.  Installation will vary by platform and instructions for doing so should be fairly easy to find.  For installing on Ubuntu Linux 22.04 and similar platforms, I've found [these instructions](https://tecadmin.net/how-to-install-mongodb-on-ubuntu-22-04/) to be helpful.
 
 It is also possible (and relatively simple) to run MongoDB from a docker container.  While probably not appropriate for a production installation or system under heavy load, this approach might be useful for development, evaluation, and other applications.  The [official site includes instructions for doing so](https://www.mongodb.com/compatibility/docker).
 
-### mongoexpress
+### mongo-express installation
 
 This tool is a bit quirky, and probably not appropriate for a production MongoDB installation.  There is some documentation on the [github repo](https://github.com/mongo-express/mongo-express), but I encountered some odd issues in installation, namely that I couldn't get the latest version working.  It is also necessary to tweak the config file (/usr/local/lib/node_modules/mongo-express/config.js by default) to get the installation working with your MongoDB install.
 
