@@ -757,7 +757,41 @@ The dp-ingest project includes pretty thorough jUnit test coverage in its "test/
 
 ## mongodb schema
 
-TODO: details about database schema for time series and metadata.
+This section includes some details about the schema used to store data in MongoDB.  Please note that this is all subject to change at this point in our project!
+
+The Data Platform uses a single MongoDB database called "dp" to contain the data that it creates.
+
+The database contains two primary collections, "buckets" and "requestStatus".  The former contains the time series and metadata documents created from by the ingestion service.  A document is created for each "IngestionRequest" handled by the service to reflect the disposition of that request, indicating whether or not it was successfully handled.
+
+On a development system, the "dp" database might contain other collections that are created by regression test execution.  This will generally be named with a "test-" prefix.
+
+Each of the primary collections is described in more detail below.
+
+### buckets collection
+
+Documents in the "buckets" collection contain the following fields:
+
+- __id_: The MongoDB unique document identifier.
+- _columnName_: The name of the source data column for the bucket.
+- _eventDescriptption_: String description of associated event, if any.
+- _eventSeconds / eventNanos_: Timestamp for associated event, if any.
+- _firstSeconds / firstNanos_: Timestamp for first timestamp of bucket.
+- _lastSeconds / lastNanos_: Timestamp for last timestamp of bucket.
+- _dataType_: Indicates the Java data type for the data contained by the document's bucket, e.g., "DOUBLE", "INTEGER", "STRING", "BOOLEAN".
+- _attributeMap_: Key/value metadata for the bucket document.
+- _numSamples_: Number of samples contained by the bucket.
+- _sampleFrequency_: Delta in nanoseconds from first timestamp for each data value contained by the bucket.
+- _columnDataList_: A list of data values for the bucket.  The timestamp for the first value in the list is firstSeconds + firstNanos.  The timestamp for each subsequent value in the list is the delta from the start time plus e.g., first timestamp + (sampleFrequency * list index).
+
+### requestStatus collection
+
+- __id_: The MongoDB unique document identifier.
+- _providerId_: The providerId specified in the corresponding IngestionRequest.
+- _requestId_: The clientRequestId specified in the corresponding IngestionRequest.
+- _status_: Indicates "success", "reject", or "error" disposition of request.
+- _msg_: Provides details for "reject" and "error" disposition.
+- _idsCreated_: For a successful request, contains the MongoDB ids (_id field) of the documents created in the "buckets" collection for the request.
+- _updateTime_: Indicates the time that the requestStatus was updated.
 
 ## gRPC
 
