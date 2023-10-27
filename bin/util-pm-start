@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-# source ~/dp/dp-support/env/dp-env
-
 echo
 echo '================================================================'
 echo 'util-pm-start'
@@ -17,12 +15,13 @@ echo "service command: $APP_CMD"
 
 test -z "$SVC_NAME" && { echo "util-pm-start fatal error: service name parameter not specified"; exit 1; }
 test -z "$APP_CMD" && { echo "util-pm-start fatal error: start command parameter not specified"; exit 1; }
+test -z "$DP_HOME" && { echo "util-pm-start fatal error: DP_HOME not set"; exit 1; }
 
 # using parens to expand the ~ character since double quoting doesn't expand it, alternative is to use:
 # eval LOCKFILE="~/datastore/datastore-deployment/var/lock/$SVC_NAME.pid"
 # which could be dangerous if the value is entered by the user
-LOCKFILE=( ../../var/lock/$SVC_NAME.pid )
-LOGFILE=( ../../var/log/$SVC_NAME.log )
+LOCKFILE="$DP_HOME/var/lock/$SVC_NAME.pid"
+LOGFILE="$DP_HOME/var/log/$SVC_NAME.log"
 
 echo "lockfile: $LOCKFILE"
 echo "logfile: $LOGFILE"
