@@ -18,7 +18,7 @@ test -z "$SVC_NAME" && { echo "util-pm-status fatal error: service name paramete
 # using parens to expand punctuation characters since double quoting doesn't expand it, alternative is to use:
 # eval LOCKFILE="../var/lock/$SVC_NAME.pid"
 # which could be dangerous if the value is entered by the user
-LOCKFILE=( ../var/lock/$SVC_NAME.pid )
+LOCKFILE=( ../../var/lock/$SVC_NAME.pid )
 
 echo "lockfile: $LOCKFILE"
 

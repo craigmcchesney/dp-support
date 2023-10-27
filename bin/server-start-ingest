@@ -14,9 +14,9 @@ SVC_NAME='dp-ingest'
 # using parens to expand punctuation charactersince double quoting doesn't expand it, alternative is to use:
 # eval LOCKFILE="../var/lock/$SVC_NAME.pid"
 # which could be dangerous if the value is entered by the user
-APP_JAR=( ../lib/dp-ingest.jar )
-APP_CONFIG=( ../config/dp-ingest.yml )
-LOG4J_CONFIG=( ../config/log4j2.xml )
+APP_JAR=( ../../lib/dp-ingest/dp-ingest.jar )
+APP_CONFIG=( ../../config/dp-ingest.yml )
+LOG4J_CONFIG=( ../../config/log4j2.xml )
 
 APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -jar $APP_JAR"
 
@@ -27,7 +27,7 @@ echo "app_cmd: $APP_CMD"
 test -z "$JAVA_HOME" && { echo "fatal error: JAVA_HOME variable is not set"; exit 1; }
 
 # check for presence of jar
-test -f "$APP_JAR" || { echo "$APP_JAR not found"; exit 1; }
+test -L "$APP_JAR" || { echo "symbolic link $APP_JAR not found, consider creating link to numbered version of jar"; exit 1; }
 
 # surround params in single quotes to encapsulate spaces in values etc
 ./util-pm-start \'"$SVC_NAME"\' \'"$APP_CMD"\' || { echo "util-pm-start failed"; exit 1; }

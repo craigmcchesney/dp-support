@@ -1,5 +1,0 @@
-#!/bin/sh
-
-openssl req -x509 -newkey rsa:4096 -keyout ../../dp-java/dp-ingest/src/main/resources/priv-key.pem -out ../../dp-java/dp-ingest/src/main/resources/public-key-cert.pem -days 365 -nodes -subj '/CN=localhost'
-
-

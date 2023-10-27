@@ -21,8 +21,8 @@ test -z "$APP_CMD" && { echo "util-pm-start fatal error: start command parameter
 # using parens to expand the ~ character since double quoting doesn't expand it, alternative is to use:
 # eval LOCKFILE="~/datastore/datastore-deployment/var/lock/$SVC_NAME.pid"
 # which could be dangerous if the value is entered by the user
-LOCKFILE=( ../var/lock/$SVC_NAME.pid )
-LOGFILE=( ../var/log/$SVC_NAME.log )
+LOCKFILE=( ../../var/lock/$SVC_NAME.pid )
+LOGFILE=( ../../var/log/$SVC_NAME.log )
 
 echo "lockfile: $LOCKFILE"
 echo "logfile: $LOGFILE"
