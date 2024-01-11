@@ -26,7 +26,8 @@ test -d "$DP_HOME" || { echo "fatal error: configured DP_HOME directory $DP_HOME
 SVC_NAME='dp-ingest'
 
 APP_JAR="$DP_HOME/lib/dp-ingest/dp-ingest.jar"
-APP_CONFIG="$DP_HOME/config/dp-ingest.yml"
+#APP_CONFIG="$DP_HOME/config/dp-ingest.yml"
+APP_CONFIG="$DP_HOME/config/application.yml"
 LOG4J_CONFIG="$DP_HOME/config/log4j2.xml"
 
 # check java home
