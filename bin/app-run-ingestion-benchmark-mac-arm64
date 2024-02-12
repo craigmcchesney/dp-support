@@ -42,7 +42,8 @@ test -e "$APP_CONFIG" || { echo "fatal error: app config file: $APP_CONFIG not f
 test -e "$LOG4J_CONFIG" || { echo "fatal error: log4j config file: $LOG4J_CONFIG not found"; exit 1; }
 
 #APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -cp $APP_JAR com.ospreydcs.dp.ingest.benchmark.IngestionPerformanceBenchmark"
-APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -cp $APP_JAR com.ospreydcs.dp.service.ingest.benchmark.IngestionPerformanceBenchmark"
+#APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -cp $APP_JAR com.ospreydcs.dp.service.ingest.benchmark.IngestionPerformanceBenchmark"
+APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -cp $APP_JAR com.ospreydcs.dp.service.ingest.benchmark.BenchmarkStreamingIngestion"
 
 echo "app_name: $SVC_NAME"
 echo "app_cmd: $APP_CMD"
