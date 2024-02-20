@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#/bin/bash
 
 echo
 echo '================================================================'
@@ -30,7 +30,7 @@ if test -f "$LOCKFILE" ; then
     echo "$LOCKFILE exists, service appears to be running already"
     PID=$(cat "$LOCKFILE")
     # after running ps, "$?" is zero if process is running
-    ps --pid "$PID" > /dev/null
+    ps -p "$PID" > /dev/null
     if [ "$?" -eq 0 ]; then
         echo "service is running with process id: $PID"
 	exit 1

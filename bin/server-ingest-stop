@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#/bin/bash
 
 echo
 echo '================================================================'
-echo 'server-stop-ingest'
+echo 'server-ingest-stop'
 echo '================================================================'
 echo
 
