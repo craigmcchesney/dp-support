@@ -1,4 +1,0 @@
-#!/bin/sh
-
-nohup mongo-express > /dev/null 2>&1 &
-
