@@ -22,6 +22,10 @@ The dp-support repo includes tools for managing each of these components.  Use o
 
 The utilities for each component are described in more detail below.
 
+## Quick Start
+
+The data-platform repo includes a [Quick Start section](https://github.com/osprey-dcs/data-platform?tab=readme-ov-file#data-platform-quick-start) for quickly getting the Data Platform up and running, with example usage of the scripts in dp-support to manage the ecosystem.
+
 ## MongoDB scripts
 
 MongoDB is used for Data Platform persistence.  The current reference version is 7.0.5.  For details about installing MongoDB as a locally installed package or as a docker container deployment, see the [data-platform repo documentation](https://github.com/osprey-dcs/data-platform).  The tools for managing MongoDB include:
