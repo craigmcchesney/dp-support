@@ -20,7 +20,7 @@ echo "using DP_HOME: $DP_HOME"
 test -d "$DP_HOME" || { echo "fatal error: configured DP_HOME directory $DP_HOME does not exist"; exit 1; }
 
 # check that bin directory exists
-DP_BIN=$DP_HOME/dp-support/current/bin
+DP_BIN=$DP_HOME/bin
 test -d "$DP_BIN" || { echo "fatal error: $DP_BIN directory does not exist"; exit 1; }
 
 SVC_NAME='dp-query'

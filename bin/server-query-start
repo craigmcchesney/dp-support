@@ -21,7 +21,7 @@ test -d "$DP_HOME" || { echo "fatal error: configured DP_HOME directory $DP_HOME
 
 SVC_NAME='dp-query'
 
-APP_JAR="$DP_HOME/lib/dp-service/dp-service.jar"
+APP_JAR="$DP_HOME/lib/dp-service.jar"
 APP_CONFIG="$DP_HOME/config/dp.yml"
 LOG4J_CONFIG="$DP_HOME/config/log4j2.xml"
 
@@ -29,7 +29,7 @@ LOG4J_CONFIG="$DP_HOME/config/log4j2.xml"
 test -z "$JAVA_HOME" && { echo "fatal error: JAVA_HOME variable is not set"; exit 1; }
 
 # check for presence of jar
-test -L "$APP_JAR" || { echo "fatal error: symbolic link $APP_JAR not found, consider creating link to numbered version of jar"; exit 1; }
+test -e "$APP_JAR" || { echo "fatal error: file APP_JAR $APP_JAR not found"; exit 1; }
 
 # check that app config exists
 test -e "$APP_CONFIG" || { echo "fatal error: app config file: $APP_CONFIG not found"; exit 1; }
@@ -38,7 +38,7 @@ test -e "$APP_CONFIG" || { echo "fatal error: app config file: $APP_CONFIG not f
 test -e "$LOG4J_CONFIG" || { echo "fatal error: log4j config file: $LOG4J_CONFIG not found"; exit 1; }
 
 # check that bin directory exists
-DP_BIN=$DP_HOME/dp-support/current/bin
+DP_BIN=$DP_HOME/bin
 test -d "$DP_BIN" || { echo "fatal error: $DP_BIN directory does not exist"; exit 1; }
 
 APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG  -cp $APP_JAR com.ospreydcs.dp.service.query.server.QueryGrpcServer"
