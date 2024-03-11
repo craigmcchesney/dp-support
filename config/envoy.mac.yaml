@@ -16,9 +16,9 @@ static_resources:
                   - name: local_service
                     domains: ["*"]
                     routes:
-                      - match: { prefix: "/dp.service.query.DpQueryService" }
+                      - match: { prefix: "/DpQueryService" }
                         route: { cluster: query, timeout: 60s }
-                      - match: { prefix: "/dp.service.annotation.DpAnnotationService" }
+                      - match: { prefix: "/DpAnnotationService" }
                         route: { cluster: annotation, timeout: 60s } 
                     cors:
                       allow_origin_string_match:
