@@ -1,16 +1,8 @@
-# Data Platform Overview
+# dp-support
 
 This repo is part of the Data Platform project.  The Data Platform consists of services for capturing and providing access to data captured from a particle accelerator facility.  The [data-platform repo](https://github.com/osprey-dcs/data-platform) provides a project overview and links to the various project componnents, as well as an installer for running the latest version.
 
-The service implementations are contained in the [dp-service](https://github.com/osprey-dcs/dp-service) repo, which includes both user-oriented and developer-oriented documentation about the services.
-
-The service APIs are built using [gRPC](https://grpc.io/docs/what-is-grpc/introduction/) for both interface definition and message interchange.  The latest gRPC proto files for the service APIs are contained and documented in the [dp-grpc repo](https://github.com/osprey-dcs/dp-grpc).  Using gRPC, client applications can be built to interact with the Data Platform services using practically any programming language.
-
-The [dp-web-app repo](https://github.com/osprey-dcs/dp-web-app) contains a JavaScript web application that utilizes the Data Platform Query Service to navigate the archive.
-
 This repo, [dp-support](https://github.com/osprey-dcs/dp-support) includes a set of utilities for managing the processes comprising the Data Platform ecosystem.
-
-# dp-support
 
 The Data Platform ecosystem consists of the following components:
 
@@ -62,6 +54,21 @@ This script will need to be modified as appropriate if the user/password are cus
 
 - _mongodb-compass-start_: Starts the MongoDB Compass application, passing the default connection string on the command line.
 
+
+## Envoy proxy scripts
+
+The Envoy proxy is an optional part of the Data Platform ecosystem.  It is needed to run the web application, for converting the http1 traffic from the JavaScript browser application into http2 for interacting with the Data Platform services.
+
+Scripts are provided to support deployment of the Envoy proxy as a Docker container, including:
+
+- _envoy-docker-create_: Creates Envoy Docker container.
+- _envoy-docker-start_: Starts the Envoy Docker container.
+- _envoy-docker-stop_: Stops the Envoy Docker container.
+- _envoy-docker-remove_: Removes the Envoy Docker container.
+
+These scripts use config files "envoy.yaml" and "envoy.mac.yaml" in the "dp-support/config" directory.
+
+
 ## Data platform server scripts
 
 The bin directory contains scripts for managing the Data Platform server applications, including the Ingestion and Query Services.  These scripts use a set of lower level scripts in the same directory for starting/stopping processes and checking their status: _util-pm-start_, _util-pm-stop_, and _util-pm-status_, respectively.
@@ -72,11 +79,18 @@ The bin directory contains scripts for managing the Data Platform server applica
 - _server-ingest-stop_: Stops the running ingestion server application using the util-pm-stop script.
 - _server-ingest-status_: Checks the status of the ingestion server application using util-pm-status.
 
-### Query service scripts
+### Query Service scripts
 
 - _server-query-start_: Starts the query server application using the util-pm-start script.
 - _server-query-stop_: Stops the running query server application using the util-pm-stop script.
 - _server-query-status_: Checks the status of the query server application using util-pm-status.
+
+### Annotation Service scripts
+
+- _server-annotation-start_: Starts the annotation server application using the util-pm-start script.
+- _server-annotation-stop_: Stops the running annotation server application using the util-pm-stop script.
+- _server-annotation-status_: Checks the status of the annotation server application using util-pm-status.
+
 
 ## Data platform performance benchmarks
 
