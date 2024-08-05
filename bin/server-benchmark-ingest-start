@@ -19,7 +19,7 @@ echo "using DP_HOME: $DP_HOME"
 # check that DP_HOME directory exists
 test -d "$DP_HOME" || { echo "fatal error: configured DP_HOME directory $DP_HOME does not exist"; exit 1; }
 
-SVC_NAME='dp-benchmark-ingest'
+SVC_NAME='benchmark-ingest-server'
 
 APP_JAR="$DP_HOME/lib/dp-service.jar"
 APP_CONFIG="$DP_HOME/config/dp.yml"

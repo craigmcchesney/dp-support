@@ -2,7 +2,7 @@
 
 echo
 echo '================================================================'
-echo 'server-query-stop'
+echo 'server-benchmark-query-stop'
 echo '================================================================'
 echo
 
@@ -23,7 +23,7 @@ test -d "$DP_HOME" || { echo "fatal error: configured DP_HOME directory $DP_HOME
 DP_BIN=$DP_HOME/bin
 test -d "$DP_BIN" || { echo "fatal error: $DP_BIN directory does not exist"; exit 1; }
 
-SVC_NAME='query-server'
+SVC_NAME='benchmark-query-server'
 
 echo "service name: $SVC_NAME"
 
