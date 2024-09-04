@@ -73,7 +73,7 @@ These scripts use config files "envoy.yaml" and "envoy.mac.yaml" in the "dp-supp
 
 The bin directory contains scripts for managing the Data Platform server applications, including the Ingestion and Query Services.  These scripts use a set of lower level scripts in the same directory for starting/stopping processes and checking their status: _util-pm-start_, _util-pm-stop_, and _util-pm-status_, respectively.
 
-### Ingestion service scripts
+### Ingestion Service scripts
 
 - _server-ingest-start_: Starts the ingestion server application using the util-pm-start script.
 - _server-ingest-stop_: Stops the running ingestion server application using the util-pm-stop script.
@@ -94,7 +94,36 @@ The bin directory contains scripts for managing the Data Platform server applica
 
 ## Data platform performance benchmarks
 
-The bin directory contains two scripts for running the Data Platform performance benchmarks, which might be useful for testing a new installation.
+The Data Platform includes applications for running Ingestion and Query Service performance benchmarks.  The benchmarks require running non-standard Ingestion and Query servers that override the default port and database name, and then a client application for running scenarios and measuring performance.
 
-- _app-run-ingestion-benchmark_: Runs the data platform ingestion service performance benchmark application against the running ingestion server.  Displays an error if the server is not running.  Uploads one minute's data for 4,000 data sources sampled at 1 KHz.
+The bin directory includes bash scripts for running the benchmark server and client applications.
+
+### Ingestion Service benchmark scripts
+
+#### ingestion benchmark server scripts
+
+- _server-benchmark-ingest-start_: Starts the benchmark ingestion server application using the util-pm-start script.
+- _server-benchmark-ingest-stop_: Stops the running benchmark ingestion server application using the util-pm-stop script.
+- _server-benchmark-ingest-status_: Checks the status of the benchmark ingestion server application using util-pm-status.
+
+#### ingestion benchmark application scripts
+
+- _app-run-ingestion-benchmark_: Runs the data platform ingestion service performance benchmark application against the running benchmark ingestion server.  Displays an error if the server is not running.  Uploads one minute's data for 4,000 data sources sampled at 1 KHz.
+
+### Query Service benchmark scripts
+
+#### query benchmark server scripts
+
+- _server-benchmark-query-start_: Starts the benchmark query server application using the util-pm-start script.
+- _server-benchmark-query-stop_: Stops the running benchmark query server application using the util-pm-stop script.
+- _server-benchmark-query-status_: Checks the status of the benchmark query server application using util-pm-status.
+
+#### query benchmark application scripts
+
 - _app-run-query-benchmark_: Runs the query service performance benchmark application using the server-streaming time-series data query API.  Loads a set of data and exercises the query mechanism against it.
+
+## Sample data generator scripts
+
+The Data Platform includes a utility for generating sample data for use in web application development and demo purposes.  The application generates sample data for one minute and 4,000 signals each sampled at 1 KHz.  The data generator uses the standard "dp" database and data is created with a fixed date/time starting at "2023-10-31T15:51:00.000+00:00".  Happy Halloween...
+
+- _app-run-test-data-generator_: Runs the sample data generator against the running ingesiton server application.
