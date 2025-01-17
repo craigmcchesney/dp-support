@@ -27,7 +27,7 @@ if [[ $OSTYPE == 'darwin'* ]]; then
     echo "creating envoy docker container for mac os: $OSTYPE"
     # check that app config exists
     test -e "$ENVOY_CONFIG_MAC" || { echo "fatal error: ENVOY_CONFIG_MAC: $ENVOY_CONFIG_MAC not found"; exit 1; }
-    docker create --name envoy -v $ENVOY_CONFIG_MAC:/etc/envoy/envoy.yaml:ro -p 8080:8080 -p 9901:9901 envoyproxy/envoy:v1.22.0 || { echo "fatal error: failed to create envoy docker container"; exit 1; }
+    docker create --name envoy -v $ENVOY_CONFIG_MAC:/etc/envoy/envoy.yaml:ro -p 8080:8080 -e loglevel=debug envoyproxy/envoy:v1.31-latest || { echo "fatal error: failed to create envoy docker container"; exit 1; }
     
 else
     echo "creating envoy docker container for non-mac os: $OSTYPE"
