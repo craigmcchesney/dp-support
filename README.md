@@ -21,7 +21,7 @@ The data-platform repo includes a [Quick Start section](https://github.com/ospre
 
 ## MongoDB scripts
 
-MongoDB is used for Data Platform persistence.  The current reference version is 7.0.5.  For details about installing MongoDB as a locally installed package or as a docker container deployment, see the [data-platform repo documentation](https://github.com/osprey-dcs/data-platform).  The tools for managing MongoDB include:
+MongoDB is used for Data Platform persistence.  The current reference version is 8.0.6.  For details about installing MongoDB as a locally installed package or as a docker container deployment, see the [data-platform repo documentation](https://github.com/osprey-dcs/data-platform).  The tools for managing MongoDB include:
 
 ### local MongoDB installation
 
@@ -122,6 +122,7 @@ The bin directory includes bash scripts for running the benchmark server and cli
 #### ingestion benchmark application scripts
 
 - _app-run-ingestion-benchmark_: Runs the data platform ingestion service performance benchmark application against the running benchmark ingestion server.  Displays an error if the server is not running.  Uploads one minute's data for 4,000 data sources sampled at 1 KHz.
+- _app-run-ingestion-bytes-benchmark_: Runs the same ingestion scenario as the regular ingestion benchmark, but uses the byte data mechanism for sending SerializedDataColumns instead of regular DataColumns in the ingestion requests.
 
 ### Query Service benchmark scripts
 
@@ -134,6 +135,7 @@ The bin directory includes bash scripts for running the benchmark server and cli
 #### query benchmark application scripts
 
 - _app-run-query-benchmark_: Runs the query service performance benchmark application using the server-streaming time-series data query API.  Loads a set of data and exercises the query mechanism against it.
+- _app-run-query-bytes-benchmark_: Runs the same query scenario as the regular query benchmark, but uses the byte data mechanism for receiving SerializedDataColumns instead of regular DataColumns in the query result.
 
 ## Sample data generator scripts
 

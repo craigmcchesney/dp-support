@@ -2,7 +2,7 @@
 
 echo
 echo '================================================================'
-echo 'app-run-ingestion-benchmark'
+echo 'app-run-query-bytes-benchmark'
 echo '================================================================'
 echo
 
@@ -19,7 +19,7 @@ echo "using DP_HOME: $DP_HOME"
 # check that DP_HOME directory exists
 test -d "$DP_HOME" || { echo "fatal error: configured DP_HOME directory $DP_HOME does not exist"; exit 1; }
 
-APP_NAME='ingestion-benchmark'
+APP_NAME='query-benchmark-bytes'
 
 APP_JAR="$DP_HOME/lib/dp-service.jar"
 APP_CONFIG="$DP_HOME/config/dp.yml"
@@ -37,7 +37,7 @@ test -e "$APP_CONFIG" || { echo "fatal error: app config file: $APP_CONFIG not f
 # check that log4j config exists
 test -e "$LOG4J_CONFIG" || { echo "fatal error: log4j config file: $LOG4J_CONFIG not found"; exit 1; }
 
-APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -cp $APP_JAR com.ospreydcs.dp.service.ingest.benchmark.BenchmarkIngestDataBidiStream"
+APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -cp $APP_JAR com.ospreydcs.dp.service.query.benchmark.BenchmarkQueryDataStreamBytes"
 
 echo "app_name: $APP_NAME"
 echo "app_cmd: $APP_CMD"
