@@ -104,6 +104,12 @@ The bin directory contains scripts for managing the Data Platform server applica
 - _server-annotation-stop_: Stops the running annotation server application using the util-pm-stop script.
 - _server-annotation-status_: Checks the status of the annotation server application using util-pm-status.
 
+### Ingestion Stream Service scripts
+
+- _server-ingestion-stream-start_: Starts the ingestion stream server application using the util-pm-start script.
+- _server-ingestion-stream-stop_: Stops the running ingestion stream server application using the util-pm-stop script.
+- _server-ingestion-stream-status_: Checks the status of the ingestion stream server application using util-pm-status.
+
 
 ## Data platform performance benchmarks
 
