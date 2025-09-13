@@ -13,6 +13,8 @@ The Data Platform ecosystem consists of the following components:
 
 The dp-support repo includes tools for managing each of these components.  Use of the tools is optional.  They can be used as is (by downloading the installer from the data-platform repo), or can be treated as a starting place for a custom installation.  
 
+Note that Docker installation with command-line access to "docker" is a prerequisite to use the docker-based scripts.  Docker is not required for a production installation, but can be a useful way to deploy demo, test, development, and QA systems.
+
 The utilities for each component are described in more detail below.
 
 ## Quick Start
@@ -35,7 +37,7 @@ One set of scripts is used for managing a Linux MongoDB installation using the "
 
 ### Docker MongoDB deployment
 
-The second set of scripts is for managing MongoDB deployed as a Docker container.  The following scripts are included:
+The second set of scripts is for managing MongoDB deployed as a Docker container.  To use these scripts, docker must be installed on the host with command-line access to the "docker" command. The following scripts are included:
 
 - _mongodb-docker-create_: Creates MongoDB Docker container.
 - _mongodb-docker-start_: Starts the MongoDB Docker container.
@@ -109,6 +111,13 @@ The bin directory contains scripts for managing the Data Platform server applica
 - _server-ingestion-stream-start_: Starts the ingestion stream server application using the util-pm-start script.
 - _server-ingestion-stream-stop_: Stops the running ingestion stream server application using the util-pm-stop script.
 - _server-ingestion-stream-status_: Checks the status of the ingestion stream server application using util-pm-status.
+
+
+## GUI application scripts
+
+The bin directory contains scripts for running Data Platform gui applications.
+
+- _app-run-desktop-app_: Starts the desktop GUI application.
 
 
 ## Data platform performance benchmarks
