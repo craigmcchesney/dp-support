@@ -1,0 +1,36 @@
+services:
+
+#  mongodb:
+#    image: mongo:8.0.6
+#    container_name: dp-mongo # Assign a name to the container
+#    ports:
+#      - "27017:27017" # Map port 27017 on the host to port 27017 in the container
+#    networks:
+#      - grpc-network
+#    environment:
+#      MONGO_INITDB_ROOT_USERNAME: admin # Set the root username for MongoDB
+#      MONGO_INITDB_ROOT_PASSWORD: admin # Set a strong root password for MongoDB
+
+  benchmark-ingestion-server:
+    container_name: dp-ingestion-benchmark-server
+    build:
+      context: ../../..
+      dockerfile: ./docker/services/BenchmarkIngestionGrpcServer/Dockerfile
+    ports:
+      - "60051:60051"
+    networks:
+      - grpc-network
+
+  envoy:
+    image: envoyproxy/envoy:v1.18-latest
+    container_name: dp-envoy-load-balancer
+    volumes:
+      - ./config/envoy.yaml:/etc/envoy/envoy.yaml
+    ports:
+      - "8080:8080"
+    networks:
+      - grpc-network
+
+networks:
+  grpc-network:
+    driver: bridge
