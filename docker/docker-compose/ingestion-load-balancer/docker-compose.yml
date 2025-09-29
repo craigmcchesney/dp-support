@@ -11,13 +11,23 @@ services:
 #      MONGO_INITDB_ROOT_USERNAME: admin # Set the root username for MongoDB
 #      MONGO_INITDB_ROOT_PASSWORD: admin # Set a strong root password for MongoDB
 
-  benchmark-ingestion-server:
-    container_name: dp-ingestion-benchmark-server
+  benchmark-ingestion-server-1:
+    container_name: dp-benchmark-ingestion-server-1
     build:
       context: ../../..
       dockerfile: ./docker/services/BenchmarkIngestionGrpcServer/Dockerfile
-    ports:
-      - "60051:60051"
+    expose:
+      - "60051" # expose to internal docker network on 60051
+    networks:
+      - grpc-network
+
+  benchmark-ingestion-server-2:
+    container_name: dp-benchmark-ingestion-server-2
+    build:
+      context: ../../..
+      dockerfile: ./docker/services/BenchmarkIngestionGrpcServer/Dockerfile
+    expose:
+      - "60051" # expose to internal docker network on 60051
     networks:
       - grpc-network
 
