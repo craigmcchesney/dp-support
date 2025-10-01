@@ -1,0 +1,56 @@
+services:
+
+    mongodb:
+      image: mongo:8.0.6
+      container_name: dp-eco-mongo # Assign a name to the container
+      ports:
+        - "27017:27017" # Map port 27017 on the host to port 27017 in the container
+      networks:
+        - grpc-network
+      environment:
+        MONGO_INITDB_ROOT_USERNAME: admin # Set the root username for MongoDB
+        MONGO_INITDB_ROOT_PASSWORD: admin # Set a strong root password for MongoDB
+
+    ingestion-server:
+      container_name: dp-eco-ingestion
+      build:
+        context: ../../..
+        dockerfile: ./docker/services/IngestionGrpcServer/Dockerfile
+      ports:
+        - "50051:50051" # Map port 50051 on the host to port 50051 in the container
+      networks:
+        - grpc-network
+
+    query-server:
+      container_name: dp-eco-query
+      build:
+        context: ../../..
+        dockerfile: ./docker/services/QueryGrpcServer/Dockerfile
+      ports:
+        - "50052:50052" # Map port 50052 on the host to port 50052 in the container
+      networks:
+        - grpc-network
+
+    annotation-server:
+      container_name: dp-eco-annotation
+      build:
+        context: ../../..
+        dockerfile: ./docker/services/AnnotationGrpcServer/Dockerfile
+      ports:
+        - "50053:50053" # Map port 50053 on the host to port 50053 in the container
+      networks:
+        - grpc-network
+
+    ingestion-stream-server:
+      container_name: dp-eco-ingestion-stream
+      build:
+        context: ../../..
+        dockerfile: ./docker/services/IngestionStreamGrpcServer/Dockerfile
+      ports:
+        - "50054:50054" # Map port 50051 on the host to port 50054 in the container
+      networks:
+        - grpc-network
+
+networks:
+  grpc-network:
+    driver: bridge
