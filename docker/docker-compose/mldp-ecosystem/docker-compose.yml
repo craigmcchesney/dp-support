@@ -1,56 +1,70 @@
 services:
 
-    mongodb:
+    eco-mongodb:
       image: mongo:8.0.6
-      container_name: dp-eco-mongo # Assign a name to the container
       ports:
-        - "27017:27017" # Map port 27017 on the host to port 27017 in the container
+        - "27017:27017" # expose port on internal and external networks
       networks:
-        - grpc-network
+        - eco-network
       environment:
         MONGO_INITDB_ROOT_USERNAME: admin # Set the root username for MongoDB
         MONGO_INITDB_ROOT_PASSWORD: admin # Set a strong root password for MongoDB
 
-    ingestion-server:
-      container_name: dp-eco-ingestion
+    eco-ingestion-server:
       build:
         context: ../../..
-        dockerfile: ./docker/services/IngestionGrpcServer/Dockerfile
+        dockerfile: ./docker/applications/JavaApp/Dockerfile
       ports:
         - "50051:50051" # Map port 50051 on the host to port 50051 in the container
       networks:
-        - grpc-network
+        - eco-network
+      command:
+        - "-Ddp.MongoClient.dbHost=eco-mongodb"
+        - "-cp"
+        - "/app/dp-service.jar"
+        - "com.ospreydcs.dp.service.ingest.server.IngestionGrpcServer"
 
-    query-server:
-      container_name: dp-eco-query
+    eco-query-server:
       build:
         context: ../../..
-        dockerfile: ./docker/services/QueryGrpcServer/Dockerfile
+        dockerfile: ./docker/applications/JavaApp/Dockerfile
       ports:
         - "50052:50052" # Map port 50052 on the host to port 50052 in the container
       networks:
-        - grpc-network
+        - eco-network
+      command:
+        - "-Ddp.MongoClient.dbHost=eco-mongodb"
+        - "-cp"
+        - "/app/dp-service.jar"
+        - "com.ospreydcs.dp.service.query.server.QueryGrpcServer"
 
-    annotation-server:
-      container_name: dp-eco-annotation
+    eco-annotation-server:
       build:
         context: ../../..
-        dockerfile: ./docker/services/AnnotationGrpcServer/Dockerfile
+        dockerfile: ./docker/applications/JavaApp/Dockerfile
       ports:
         - "50053:50053" # Map port 50053 on the host to port 50053 in the container
       networks:
-        - grpc-network
+        - eco-network
+      command:
+        - "-Ddp.MongoClient.dbHost=eco-mongodb"
+        - "-cp"
+        - "/app/dp-service.jar"
+        - "com.ospreydcs.dp.service.annotation.server.AnnotationGrpcServer"
 
-    ingestion-stream-server:
-      container_name: dp-eco-ingestion-stream
+    eco-ingestion-stream-server:
       build:
         context: ../../..
-        dockerfile: ./docker/services/IngestionStreamGrpcServer/Dockerfile
+        dockerfile: ./docker/applications/JavaApp/Dockerfile
       ports:
         - "50054:50054" # Map port 50051 on the host to port 50054 in the container
       networks:
-        - grpc-network
+        - eco-network
+      command:
+        - "-cp"
+        - "/app/dp-service.jar"
+        - "com.ospreydcs.dp.service.ingestionstream.server.IngestionStreamGrpcServer"
 
 networks:
-  grpc-network:
+  eco-network:
     driver: bridge
