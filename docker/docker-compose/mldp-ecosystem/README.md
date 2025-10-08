@@ -7,7 +7,7 @@ This docker-compose file runs the full MLDP ecosystem, including the mongodb ser
 Run the scenario using docker compose as illustrated below:
 
 ```
-/usr/bin/docker compose -f dp-support/docker/docker-compose/ingestion-load-balancer/docker-compose.yml -p ingestion-load-balancer up -d
+/usr/bin/docker compose -f dp-support/docker/docker-compose/mldp-ecosystem/docker-compose.yml -p mldp-ecosystem up -d
 ```
 
 Once the ecosystem is running, any MLDP client can be used to interact with the services.  For example, to generate some sample data, run the TestDataGenerator.
