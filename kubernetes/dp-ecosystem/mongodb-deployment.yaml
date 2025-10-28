@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mongodb
-  namespace: ingestion-lb
+  namespace: dp-ecosystem
   labels:
     app: mongodb
     component: database

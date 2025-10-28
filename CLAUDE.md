@@ -46,41 +46,79 @@ docker compose -f ~/data-platform/docker/docker-compose/ingestion-load-balancer/
 ~/data-platform/bin/app-run-docker-lb-ingestion-benchmark
 ```
 
-### Kubernetes Load Balancer (Minikube)
+### Kubernetes Data Platform Ecosystem (Minikube)
+
+**Prerequisites:**
+```bash
+minikube start
+./docker/applications/build-dp-images.sh
+```
+
 **Deployment:**
 ```bash
-cd kubernetes/ingestion-load-balancer
-# Load Docker image into minikube first
-minikube image load dp-ingestion-service:latest
-# Deploy all components
+cd kubernetes/dp-ecosystem
+# Follow deployment-script.yaml for complete step-by-step deployment
 kubectl apply -f .
 ```
 
+**Docker Image Build:**
+- Build script: `./docker/applications/build-dp-images.sh`
+- Uses same Dockerfile as docker-compose configurations (`docker/applications/JavaApp/Dockerfile`)
+- Creates images: `dp-ingestion-service`, `dp-query-service`, `dp-annotation-service`, `dp-ingestion-stream-service`
+- All services use shared `dp-service.jar` with different main classes
+
+**Service Architecture:**
+- **Ingestion Service** (port 50051) - Data ingestion via gRPC
+- **Query Service** (port 50052) - Data retrieval via gRPC  
+- **Annotation Service** (port 50053) - Metadata management
+- **Ingestion Stream Service** (port 50054) - Streaming ingestion
+- **MongoDB** (port 27017) - Shared persistence layer
+
 **Key Commands:**
-- `kubectl get svc -n ingestion-lb` - Check service endpoints
-- `kubectl get pods -n ingestion-lb` - Check pod status  
-- `kubectl get hpa -n ingestion-lb` - Check horizontal pod autoscaler
-- `kubectl logs -f deployment/ingestion-service -n ingestion-lb` - Monitor logs
-- `kubectl scale deployment ingestion-service --replicas=N -n ingestion-lb` - Manual scaling
+- `kubectl get all -n dp-ecosystem` - Check all resources
+- `kubectl get svc -n dp-ecosystem` - Check service endpoints
+- `kubectl get pods -n dp-ecosystem` - Check pod status  
+- `kubectl get hpa -n dp-ecosystem` - Check horizontal pod autoscaler
+- `kubectl logs -f deployment/{service-name} -n dp-ecosystem` - Monitor logs
 
 **External Access (Minikube):**
 - MongoDB: `$(minikube ip):30017`
-- Ingestion gRPC: `$(minikube ip):31406` 
-- Ingestion HTTP: `$(minikube ip):32607`
-- Get minikube IP: `minikube ip`
-- Get service URLs: `minikube service ingestion-service -n ingestion-lb --url`
+- Ingestion gRPC: `$(minikube ip):31406` | HTTP: `$(minikube ip):32607`
+- Query gRPC: `$(minikube ip):31407` | HTTP: `$(minikube ip):32608`  
+- Annotation gRPC: `$(minikube ip):31408` | HTTP: `$(minikube ip):32609`
+- Ingestion Stream gRPC: `$(minikube ip):31409` | HTTP: `$(minikube ip):32610`
 
-**Monitoring HPA Scaling:**
+**Horizontal Pod Autoscaling:**
+- **Ingestion**: 2-10 replicas (high-throughput workload)
+- **Query**: 2-8 replicas  
+- **Annotation**: 2-6 replicas (lighter workload)
+- **Ingestion Stream**: 2-8 replicas (streaming workload)
+
+**Monitoring:**
 ```bash
-kubectl get hpa -n ingestion-lb -w
-kubectl get pods -n ingestion-lb -w
-kubectl top pods -n ingestion-lb
+kubectl get hpa -n dp-ecosystem -w
+kubectl get pods -n dp-ecosystem -w
+kubectl top pods -n dp-ecosystem
+```
+
+**Manual Scaling:**
+```bash
+kubectl scale deployment ingestion-service --replicas=N -n dp-ecosystem
+kubectl scale deployment query-service --replicas=N -n dp-ecosystem
+kubectl scale deployment annotation-service --replicas=N -n dp-ecosystem
+kubectl scale deployment ingestion-stream-service --replicas=N -n dp-ecosystem
 ```
 
 **Cleanup:**
 ```bash
-kubectl delete namespace ingestion-lb
+kubectl delete namespace dp-ecosystem
 ```
+
+**Performance Expectations:**
+- **Target workload**: 4000 sources × 1000 Hz = 4M samples/sec
+- **Minikube results**: 11min for 1min data (single pod), 20min (dual pod)
+- **Production requirement**: Real-time (1:1 ratio) with sub-second response times
+- **Resource scaling**: Performance degrades in constrained environments (minikube)
 
 ## Architecture
 
@@ -104,9 +142,13 @@ The `util-pm-start`, `util-pm-stop`, and `util-pm-status` scripts provide proces
 
 ### Docker Configuration
 - Single Dockerfile in `docker/applications/JavaApp/Dockerfile` using OpenJDK 21
-- JAR files stored in `lib/` directory
+- JAR files stored in `lib/` directory  
 - Envoy configurations in `config/envoy.yaml` and `config/envoy.mac.yaml`
 - Docker compose setups create bridge networks for inter-service communication
+- **Kubernetes Integration**: Same Docker images used for both docker-compose and Kubernetes deployments
+  - Build script: `./docker/applications/build-dp-images.sh` creates K8s-tagged images
+  - Identical base image, different tags for service identification in Kubernetes
+  - All services share `dp-service.jar` with different main class entry points
 
 ### Performance Benchmarks
 Benchmark services use separate ports and databases to avoid conflicts:

@@ -1,29 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ingestion-service
-  namespace: ingestion-lb
+  name: ingestion-stream-service
+  namespace: dp-ecosystem
   labels:
-    app: ingestion-service
+    app: ingestion-stream-service
     component: backend
 spec:
   replicas: 2  # Start with 2 replicas, HPA will manage scaling
   selector:
     matchLabels:
-      app: ingestion-service
+      app: ingestion-stream-service
   template:
     metadata:
       labels:
-        app: ingestion-service
+        app: ingestion-stream-service
     spec:
       containers:
-      - name: ingestion-service
+      - name: ingestion-stream-service
         # In a real deployment, you'd push this to a container registry
         # For now, assume the image is built and available
-        image: dp-ingestion-service:latest
+        image: dp-ingestion-stream-service:latest
         imagePullPolicy: IfNotPresent  # Try local first, then pull
         ports:
-        - containerPort: 50051
+        - containerPort: 50054
           name: grpc
           protocol: TCP
         env:
@@ -37,7 +37,7 @@ spec:
         - "-Ddp.MongoClient.dbHost=mongodb"
         - "-cp"
         - "/app/dp-service.jar"
-        - "com.ospreydcs.dp.service.ingest.server.IngestionGrpcServer"
+        - "com.ospreydcs.dp.service.ingestionstream.server.IngestionStreamGrpcServer"
         resources:
           requests:
             memory: "200Mi"
@@ -48,11 +48,11 @@ spec:
         # Health checks for gRPC services
         livenessProbe:
           tcpSocket:
-            port: 50051
+            port: 50054
           initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe:
           tcpSocket:
-            port: 50051
+            port: 50054
           initialDelaySeconds: 5
           periodSeconds: 5
