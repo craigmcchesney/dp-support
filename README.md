@@ -83,6 +83,35 @@ Scripts are provided to support deployment of the Apache server as a Docker cont
 - _apache-docker-stop_: Stops the Apache Docker container.
 - _apache-docker-remove_: Removes the Apache Docker container.
 
+## Data Platform scripts
+
+The bin directory contains scripts for managing the Data Platform server applications, including the Ingestion and Query Services.  These scripts use a set of lower level scripts in the same directory for starting/stopping processes and checking their status: _util-pm-start_, _util-pm-stop_, and _util-pm-status_, respectively.
+
+### Ingestion Service scripts
+
+- _server-ingest-start_: Starts the ingestion server application using the util-pm-start script.
+- _server-ingest-stop_: Stops the running ingestion server application using the util-pm-stop script.
+- _server-ingest-status_: Checks the status of the ingestion server application using util-pm-status.
+
+### Query Service scripts
+
+- _server-query-start_: Starts the query server application using the util-pm-start script.
+- _server-query-stop_: Stops the running query server application using the util-pm-stop script.
+- _server-query-status_: Checks the status of the query server application using util-pm-status.
+
+### Annotation Service scripts
+
+- _server-annotation-start_: Starts the annotation server application using the util-pm-start script.
+- _server-annotation-stop_: Stops the running annotation server application using the util-pm-stop script.
+- _server-annotation-status_: Checks the status of the annotation server application using util-pm-status.
+
+### Ingestion Stream Service scripts
+
+- _server-ingestion-stream-start_: Starts the ingestion stream server application using the util-pm-start script.
+- _server-ingestion-stream-stop_: Stops the running ingestion stream server application using the util-pm-stop script.
+- _server-ingestion-stream-status_: Checks the status of the ingestion stream server application using util-pm-status.
+
+
 ## Data Platform Docker support
 
 The data-platform installation directory includes a "docker" subdirectory that contains tools for running Data Platform services and applications using Docker.
@@ -122,33 +151,16 @@ To run a Dockerized Java client that runs the Ingestion Service performance benc
 
 This sends ingestion requests to the load balancer on port 8080, which dispatches the requests to the two Ingestion Service instances using a round-robin policy.
 
-## Data Platform scripts
 
-The bin directory contains scripts for managing the Data Platform server applications, including the Ingestion and Query Services.  These scripts use a set of lower level scripts in the same directory for starting/stopping processes and checking their status: _util-pm-start_, _util-pm-stop_, and _util-pm-status_, respectively.
+## Data Platform Kubernetes support
 
-### Ingestion Service scripts
+The data-platform installation directory includes a "kubernetes" subdirectory that contains tools for running Data Platform services and applications using Kubernetes.  Inside that directory is a "dp-ecosystem" subdirectory that contains kubernetes config files for running the full Data Platform ecosystem.
 
-- _server-ingest-start_: Starts the ingestion server application using the util-pm-start script.
-- _server-ingest-stop_: Stops the running ingestion server application using the util-pm-stop script.
-- _server-ingest-status_: Checks the status of the ingestion server application using util-pm-status.
+The file "deployment-script" illustrates the steps needed to run the system using kubernetes.  Because it uses Minikube to run Kubernetes on a local machine, it is not suitable for production.  However, the configuration files used by the script are a good starting place for running the Data Platform services on a Kubernetes cluster.
 
-### Query Service scripts
+The script loads Docker images for each of the Data Platform services into minikube so they can be used in the deployment configuration files for running each service.  It creates a "dp-ecosystem" namespace, and then applies the configuration files creating the Kubernetes deployment and service for each element of the ecosystem including MongoDB and the Data Platform Ingestion, Query, Annotation, and Ingestion Stream services.
 
-- _server-query-start_: Starts the query server application using the util-pm-start script.
-- _server-query-stop_: Stops the running query server application using the util-pm-stop script.
-- _server-query-status_: Checks the status of the query server application using util-pm-status.
-
-### Annotation Service scripts
-
-- _server-annotation-start_: Starts the annotation server application using the util-pm-start script.
-- _server-annotation-stop_: Stops the running annotation server application using the util-pm-stop script.
-- _server-annotation-status_: Checks the status of the annotation server application using util-pm-status.
-
-### Ingestion Stream Service scripts
-
-- _server-ingestion-stream-start_: Starts the ingestion stream server application using the util-pm-start script.
-- _server-ingestion-stream-stop_: Stops the running ingestion stream server application using the util-pm-stop script.
-- _server-ingestion-stream-status_: Checks the status of the ingestion stream server application using util-pm-status.
+The configuration initially starts 2 replicas for each Data Platform service, and uses Kubernetes Horizontal Pod Autscaler (HPA) to manage horizontal scaling.  The "hpa.yaml" file specifies rules for scaling each service by CPU and memory utilization.
 
 
 ## GUI application scripts
@@ -194,4 +206,4 @@ The bin directory includes bash scripts for running the benchmark server and cli
 
 The Data Platform includes a utility for generating sample data for use in web application development and demo purposes.  The application generates sample data for one minute and 4,000 signals each sampled at 1 KHz.  The data generator uses the standard "dp" database and data is created with a fixed date/time starting at "2023-10-31T15:51:00.000+00:00".  Happy Halloween...
 
-- _app-run-test-data-generator_: Runs the sample data generator against the running ingesiton server application.
+- _app-run-test-data-generator_: Runs the sample data generator against the running ingestion server application.
