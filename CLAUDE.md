@@ -34,17 +34,19 @@ This is dp-support, a utilities repository for managing the Data Platform ecosys
 - `./bin/app-run-{ingestion|query}-bytes-benchmark` - Byte-based benchmark variants
 
 ### Docker Compose Ecosystems
-**Full ecosystem:**
+**Full ecosystem with Envoy load balancer:**
 ```bash
-docker compose -f ~/data-platform/docker/docker-compose/mldp-ecosystem/docker-compose.yml -p mldp-ecosystem up -d
+cd docker/docker-compose/dp-ecosystem/
+docker compose up -d
+# Test data generator
 ~/data-platform/bin/app-run-docker-test-data-generator
 ```
 
-**Load balancer demo:**
-```bash
-docker compose -f ~/data-platform/docker/docker-compose/ingestion-load-balancer/docker-compose.yml -p ingestion-load-balancer up -d
-~/data-platform/bin/app-run-docker-lb-ingestion-benchmark
-```
+**Load Balancer Configuration:**
+- **Envoy proxy** on port 8080 routes gRPC traffic to multiple ingestion servers
+- **2x Ingestion servers** (eco-ingestion-server-1, eco-ingestion-server-2) on port 50051
+- **Round-robin load balancing** for high-throughput ingestion
+- **Client access**: Connect to `localhost:8080` for load-balanced ingestion requests
 
 ### Kubernetes Data Platform Ecosystem (Minikube)
 

@@ -10,12 +10,35 @@ services:
         MONGO_INITDB_ROOT_USERNAME: admin # Set the root username for MongoDB
         MONGO_INITDB_ROOT_PASSWORD: admin # Set a strong root password for MongoDB
 
-    eco-ingestion-server:
+    eco-envoy:
+      image: envoyproxy/envoy:v1.18-latest
+      volumes:
+        - ./config/envoy.yaml:/etc/envoy/envoy.yaml
+      ports:
+        - "8080:8080"
+      networks:
+        - eco-network
+
+    eco-ingestion-server-1:
       build:
         context: ../../..
         dockerfile: ./docker/applications/JavaApp/Dockerfile
       ports:
-        - "50051:50051" # Map port 50051 on the host to port 50051 in the container
+        - "50051:50051" # expose standard port 50051 both internally and externally for one server instance
+      networks:
+        - eco-network
+      command:
+        - "-Ddp.MongoClient.dbHost=eco-mongodb"
+        - "-cp"
+        - "/app/dp-service.jar"
+        - "com.ospreydcs.dp.service.ingest.server.IngestionGrpcServer"
+
+    eco-ingestion-server-2:
+      build:
+        context: ../../..
+        dockerfile: ./docker/applications/JavaApp/Dockerfile
+      expose:
+        - "50051" # expose only to internal docker network on standard gRPC port for second instance
       networks:
         - eco-network
       command:

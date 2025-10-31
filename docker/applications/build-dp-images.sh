@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Build all DP Service Docker Images
-# Uses the same build approach as mldp-ecosystem docker-compose.yml
+# Uses the same build approach as dp-ecosystem docker-compose.yml
 # All services use the same base image but are tagged differently for Kubernetes
 
 set -e  # Exit on error
@@ -11,7 +11,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 echo "Building all DP Service Docker images..."
 echo "Project root: $PROJECT_ROOT"
-echo "Using same build context as mldp-ecosystem docker compose"
+echo "Using same build context as dp-ecosystem docker compose"
 
 # Use project root as context (same as docker-compose context: ../../..)
 cd "$PROJECT_ROOT"
@@ -36,7 +36,7 @@ docker build -f ./docker/applications/JavaApp/Dockerfile -t dp-ingestion-stream-
 
 echo ""
 echo "✅ All DP service images built successfully!"
-echo "These images use the same base as mldp-ecosystem docker compose services."
+echo "These images use the same base as dp-ecosystem docker compose services."
 echo ""
 echo "Available images:"
 docker images | grep "dp-.*-service"

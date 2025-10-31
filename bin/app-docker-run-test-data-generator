@@ -9,8 +9,8 @@ echo
 APP_NAME="mldp-app-test-data-generator:latest"
 APP_DOCKERFILE="../docker/applications/JavaApp/Dockerfile"
 APP_BUILD_CONTEXT=".."
-DOCKER_NETWORK="mldp-ecosystem_eco-network"
-CLIENT_CONNECT_STRING="eco-ingestion-server:50051"
+DOCKER_NETWORK="dp-ecosystem_eco-network"
+CLIENT_CONNECT_STRING="eco-envoy:8080"
 
 echo "🔧 Building app: $APP_NAME"
 docker build -f "$APP_DOCKERFILE" -t "$APP_NAME" "$APP_BUILD_CONTEXT"
@@ -21,8 +21,8 @@ fi
 
 echo "🚀 Running app: $APP_NAME"
 docker run --rm --network "$DOCKER_NETWORK"  "$APP_NAME" \
-  -Ddp.GrpcClient.ingestionConnectString="$CLIENT_CONNECT_STRING"
-  -cp /app/dp-service.jar
+  -Ddp.GrpcClient.ingestionConnectString="$CLIENT_CONNECT_STRING" \
+  -cp /app/dp-service.jar \
   com.ospreydcs.dp.service.ingest.utility.TestDataGenerator
 if [ $? -ne 0 ]; then
   echo "❌ Docker run failed."

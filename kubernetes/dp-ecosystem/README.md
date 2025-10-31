@@ -1,86 +1,129 @@
-# Kubernetes Ingestion Load Balancer
+# Kubernetes Data Platform Ecosystem
 
-This directory contains Kubernetes manifests that replace the Docker Compose `ingestion-load-balancer` configuration with native Kubernetes load balancing and dynamic scaling.
+This directory contains Kubernetes manifests for deploying the complete Data Platform ecosystem with all four core services: Ingestion, Query, Annotation, and Ingestion Stream services, along with MongoDB and horizontal pod autoscaling.
 
-## Key Differences from Docker Compose
+## Architecture Overview
 
-| Component | Docker Compose | Kubernetes |
-|-----------|----------------|------------|
-| **Load Balancing** | Static Envoy proxy with 2 hardcoded servers | Kubernetes Service with dynamic pod selection |
-| **Scaling** | Fixed 2 replicas | HorizontalPodAutoscaler (2-10 replicas based on CPU/memory) |
-| **Service Discovery** | Docker network + static hostnames | Kubernetes DNS + service names |
-| **Port Exposure** | Envoy on 8080 → 60051 | LoadBalancer service on 8080 → 60051 |
+The Kubernetes deployment provides:
+- **All 4 DP Services**: Ingestion, Query, Annotation, and Ingestion Stream
+- **MongoDB**: Shared persistence layer
+- **Horizontal Pod Autoscaling**: Dynamic scaling based on CPU/memory usage
+- **Service Discovery**: Native Kubernetes DNS and service routing
+- **Health Checks**: Liveness and readiness probes for all services
+- **NodePort Access**: External access via minikube for development
 
 ## Files Overview
 
-- **00-namespace.yaml**: Creates isolated namespace `ingestion-lb`
-- **01-mongodb-deployment.yaml**: MongoDB single instance with resource limits
-- **02-mongodb-service.yaml**: Internal ClusterIP service for MongoDB
-- **03-ingestion-deployment.yaml**: Ingestion service with 2 initial replicas and health checks
-- **04-ingestion-service.yaml**: LoadBalancer service exposing ingestion pods
-- **05-hpa.yaml**: HorizontalPodAutoscaler for dynamic scaling (2-10 replicas)
-- **06-deployment-script.yaml**: Step-by-step deployment commands
+- **namespace.yaml**: Creates isolated namespace `dp-ecosystem`
+- **mongodb-deployment.yaml**: MongoDB single instance with resource limits
+- **mongodb-service.yaml**: NodePort service exposing MongoDB externally
+- **ingestion-deployment.yaml**: Ingestion service with 2 initial replicas
+- **ingestion-service.yaml**: NodePort service exposing ingestion on ports 31406/32607
+- **query-deployment.yaml**: Query service with 2 initial replicas
+- **query-service.yaml**: NodePort service exposing query on ports 31407/32608
+- **annotation-deployment.yaml**: Annotation service with 2 initial replicas
+- **annotation-service.yaml**: NodePort service exposing annotation on ports 31408/32609
+- **ingestion-stream-deployment.yaml**: Ingestion Stream service with 2 initial replicas
+- **ingestion-stream-service.yaml**: NodePort service exposing ingestion stream on ports 31409/32610
+- **hpa.yaml**: HorizontalPodAutoscaler configurations for all services
+- **deployment-script.yaml**: Complete step-by-step deployment instructions
+
+## Service Architecture
+
+| Service | Internal Port | External gRPC | External HTTP | Main Class |
+|---------|---------------|---------------|---------------|------------|
+| **Ingestion** | 50051 | 31406 | 32607 | `IngestionGrpcServer` |
+| **Query** | 50052 | 31407 | 32608 | `QueryGrpcServer` |
+| **Annotation** | 50053 | 31408 | 32609 | `AnnotationGrpcServer` |
+| **Ingestion Stream** | 50054 | 31409 | 32610 | `IngestionStreamGrpcServer` |
+| **MongoDB** | 27017 | 30017 | - | - |
 
 ## Prerequisites
 
-1. **Kubernetes cluster** (minikube, kind, or cloud provider)
-2. **kubectl** configured to connect to your cluster
-3. **Metrics server** installed for HPA to work:
-   ```bash
-   kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-   ```
-4. **Container image** built and available (see notes below)
+1. **Minikube** running: `minikube start`
+2. **Docker images** built: `./docker/applications/build-dp-images.sh`
+3. **kubectl** configured to connect to minikube cluster
 
-## Container Image Notes
+## Quick Start
 
-The configuration assumes `dp-ingestion-service:latest` is available. You'll need to:
+```bash
+# 1. Build all DP service images
+./docker/applications/build-dp-images.sh
 
-1. **Build the image** from your existing Dockerfile:
-   ```bash
-   docker build -t dp-ingestion-service:latest -f docker/applications/JavaApp/Dockerfile .
-   ```
+# 2. Load images into minikube
+minikube image load dp-ingestion-service:latest
+minikube image load dp-query-service:latest
+minikube image load dp-annotation-service:latest
+minikube image load dp-ingestion-stream-service:latest
 
-2. **For cloud clusters**, push to a registry:
-   ```bash
-   docker tag dp-ingestion-service:latest your-registry/dp-ingestion-service:latest
-   docker push your-registry/dp-ingestion-service:latest
-   ```
-   Then update `03-ingestion-deployment.yaml` with the registry URL.
+# 3. Deploy all services
+cd kubernetes/dp-ecosystem
+kubectl apply -f .
 
-## Learning Points
+# 4. Check status
+kubectl get all -n dp-ecosystem
 
-### 1. **Namespace Isolation**
-Instead of Docker networks, Kubernetes uses namespaces to isolate resources.
+# 5. Get external access URLs
+minikube ip  # Use this IP with the NodePorts above
+```
 
-### 2. **Services vs Envoy**
-- Docker Compose used Envoy for load balancing
-- Kubernetes Services provide built-in load balancing with better integration
+## Horizontal Pod Autoscaling
 
-### 3. **Dynamic Scaling**
-- HPA monitors CPU/memory and automatically adds/removes pods
-- Scaling policies control how aggressively to scale up/down
+Each service has HPA configured with different scaling limits:
 
-### 4. **Health Checks**
-- `livenessProbe`: Restart container if unhealthy
-- `readinessProbe`: Only send traffic when ready
+| Service | Min Replicas | Max Replicas | Scale Triggers |
+|---------|--------------|--------------|----------------|
+| **Ingestion** | 2 | 10 | CPU 70%, Memory 80% |
+| **Query** | 2 | 8 | CPU 70%, Memory 80% |
+| **Annotation** | 2 | 6 | CPU 70%, Memory 80% |
+| **Ingestion Stream** | 2 | 8 | CPU 70%, Memory 80% |
 
-### 5. **Resource Management**
-- `requests`: Guaranteed resources for scheduling
-- `limits`: Maximum resources the container can use
+Monitor scaling:
+```bash
+kubectl get hpa -n dp-ecosystem -w
+kubectl get pods -n dp-ecosystem -w
+```
 
-## Testing Autoscaling
+## Docker Integration
 
-1. Deploy the configuration
-2. Generate load using your benchmark client
-3. Watch pods scale automatically:
-   ```bash
-   kubectl get hpa -n ingestion-lb -w
-   kubectl get pods -n ingestion-lb -w
-   ```
+The Kubernetes deployment uses the same Docker images as the docker-compose configurations:
+- **Shared Dockerfile**: `docker/applications/JavaApp/Dockerfile`
+- **Shared JAR**: All services use `dp-service.jar` with different main classes
+- **Build Script**: `./docker/applications/build-dp-images.sh` creates K8s-tagged images
+- **Consistency**: Identical runtime behavior between docker-compose and Kubernetes
+
+## Development vs Production
+
+**Development (Minikube):**
+- Uses NodePort services for external access
+- Single MongoDB instance
+- Local image loading with `minikube image load`
+- Resource limits suitable for local development
+
+**Production Considerations:**
+- Replace NodePort with LoadBalancer or Ingress
+- MongoDB replica set with persistent volumes
+- Push images to container registry
+- Increase resource limits for production workloads
+- Implement proper monitoring and logging
+
+## Troubleshooting
+
+**Common Issues:**
+1. **Images not found**: Run `./docker/applications/build-dp-images.sh` first
+2. **Connection failures**: Verify minikube is running and `kubectl cluster-info` works
+3. **Port conflicts**: Clean up old deployments with `kubectl delete namespace dp-ecosystem`
+4. **HPA not working**: Ensure metrics-server is installed in minikube
+
+**Cleanup:**
+```bash
+kubectl delete namespace dp-ecosystem
+```
 
 ## Next Steps
 
 - Add persistent storage for MongoDB
-- Implement proper monitoring with Prometheus
-- Add ingress controller for better external access
-- Consider service mesh (Istio) for advanced traffic management
+- Implement service mesh for advanced traffic management
+- Add monitoring with Prometheus/Grafana
+- Configure ingress controller for production access
+- Implement backup strategies for MongoDB

@@ -125,7 +125,7 @@ The "docker" directory in the installation contains a "docker-compose" subdirect
 This docker-compose configuration runs MongoDB as a Docker container, and starts the Data Platform services including Ingestion, Query, Annotation, and Ingestion Stream.  This is a simple way to run the Data Platform and supports using regular Java client applications and Dockerized client applications interacting with the services.  To start the ecosystem, use the following command:
 
 ```
-docker compose -f ~/data-platform/docker/docker-compose/mldp-ecosystem/docker-compose.yml -p mldp-ecosystem up -d
+docker compose -f ~/data-platform/docker/docker-compose/dp-ecosystem/docker-compose.yml -p dp-ecosystem up -d
 ```
 
 To run a Dockerized Java client that generates some test data and sends it to the Ingestion Service for archival, use the following command:
