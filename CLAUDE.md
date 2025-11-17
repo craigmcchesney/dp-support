@@ -23,6 +23,18 @@ This is dp-support, a utilities repository for managing the Data Platform ecosys
 - `./bin/mongodb-docker-shell` - Access mongosh shell
 - `./bin/mongodb-compass-start` - Launch GUI with default connection
 
+**Single-node replica set (docker-compose):**
+```bash
+cd docker/docker-compose/mongo-replica-set-single/
+./start-mongo-replica-set-single.sh
+```
+- **Purpose**: MongoDB replica set for testing transaction support and replica set features
+- **Connection URI**: `mongodb://admin:admin@localhost:27017/?replicaSet=rs0&authSource=admin`
+- **MongoDB Compass**: Use the connection URI above for GUI access
+- **Credentials**: admin/admin (configured with root role)
+- **Keyfile authentication**: Uses generated keyfile for internal replica set communication
+- **Persistent data**: Stored in `./data/mongo` directory
+
 ### Docker Infrastructure
 **Envoy proxy:** `./bin/envoy-docker-create/start/stop/remove`
 **Apache server:** `./bin/apache-docker-create/start/stop/remove`
