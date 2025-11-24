@@ -35,6 +35,22 @@ cd docker/docker-compose/mongo-replica-set-single/
 - **Keyfile authentication**: Uses generated keyfile for internal replica set communication
 - **Persistent data**: Stored in `./data/mongo` directory
 
+**Multi-node replica set (docker-compose):**
+```bash
+cd docker/docker-compose/mongo-replica-set-multi/
+./start-mongo-replica-set-multi.sh
+```
+- **Purpose**: 3-node MongoDB replica set for testing high availability, failover, and distributed consensus
+- **Architecture**: 1 Primary + 2 Secondary nodes with automatic failover
+- **Connection URI (Docker containers only)**: `mongodb://admin:admin@mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&authSource=admin`
+- **Individual node ports**: 27017 (mongo1), 27018 (mongo2), 27019 (mongo3)
+- **External client limitation**: MongoDB Compass and external applications cannot connect due to Docker hostname resolution conflicts
+- **Credentials**: admin/admin (configured with root role)
+- **Keyfile authentication**: Shared keyfile for secure inter-node communication
+- **Persistent data**: Stored in `./data/mongo1`, `./data/mongo2`, `./data/mongo3` directories
+- **Testing scenarios**: Primary failover (via docker exec), distributed transactions (internal), replica set mechanics
+- **For external clients**: Use the single-node replica set instead
+
 ### Docker Infrastructure
 **Envoy proxy:** `./bin/envoy-docker-create/start/stop/remove`
 **Apache server:** `./bin/apache-docker-create/start/stop/remove`
