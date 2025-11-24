@@ -9,8 +9,14 @@ echo
 APP_NAME="mldp-app-test-data-generator:latest"
 APP_DOCKERFILE="../docker/applications/JavaApp/Dockerfile"
 APP_BUILD_CONTEXT=".."
+
+# use the envoy ingestion load balancer started by the dp-ecosystem docker compose configuration
 DOCKER_NETWORK="dp-ecosystem_eco-network"
 CLIENT_CONNECT_STRING="eco-envoy:8080"
+
+# use the ingest server started by server-docker-ingest-start, which uses docker to connect to the multi-node docker mongo replica set config mongo-replica-set-multi
+# DOCKER_NETWORK="mongo-replica-set-multi_mongo-cluster"
+# CLIENT_CONNECT_STRING="dp-ingestion-server:50051"
 
 echo "🔧 Building app: $APP_NAME"
 docker build -f "$APP_DOCKERFILE" -t "$APP_NAME" "$APP_BUILD_CONTEXT"

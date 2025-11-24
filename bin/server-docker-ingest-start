@@ -1,0 +1,62 @@
+#/bin/bash
+
+echo
+echo '================================================================'
+echo 'server-docker-ingest-start'
+echo '================================================================'
+echo
+
+# Starts ingestion server that connects to the docker multi-node mongo replica set config started by the docker compose
+# mongo-replica-set-multi, via the specified URI.
+
+# The ingestion server can be connected to externally using gRPC endpoint localhost:50051 and internally using
+# dp-ingestion-server:50051.
+
+# Some useful commands once the image is running:
+# docker ps | grep dp-ingestion-server  # check if image is running
+# docker logs dp-ingestion-server       # check logs
+# docker stop dp-ingestion-server       # stop the server
+
+APP_NAME="mldp-server-ingest:latest"
+APP_DOCKERFILE="../docker/applications/JavaApp/Dockerfile"
+APP_BUILD_CONTEXT=".."
+DOCKER_NETWORK="mongo-replica-set-multi_mongo-cluster"
+MONGO_URI="mongodb://admin:admin@mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&authSource=admin"
+CONTAINER_NAME="dp-ingestion-server"
+GRPC_PORT="50051"
+
+echo "🔧 Building app: $APP_NAME"
+docker build -f "$APP_DOCKERFILE" -t "$APP_NAME" "$APP_BUILD_CONTEXT"
+if [ $? -ne 0 ]; then
+  echo "❌ Docker build failed."
+  exit 1
+fi
+
+echo "🚀 Starting app: $APP_NAME as container: $CONTAINER_NAME"
+echo "   Port: $GRPC_PORT (gRPC)"
+echo "   Network: $DOCKER_NETWORK"
+
+# Stop existing container if running
+docker stop "$CONTAINER_NAME" 2>/dev/null || true
+docker rm "$CONTAINER_NAME" 2>/dev/null || true
+
+docker run -d \
+  --name "$CONTAINER_NAME" \
+  --network "$DOCKER_NETWORK" \
+  -p "$GRPC_PORT:50051" \
+  "$APP_NAME" \
+  -Ddp.MongoClient.dbUri="$MONGO_URI" \
+  -cp /app/dp-service.jar \
+  com.ospreydcs.dp.service.ingest.server.IngestionGrpcServer
+
+if [ $? -eq 0 ]; then
+  echo "✅ Container '$CONTAINER_NAME' started successfully"
+  echo "   External gRPC access: localhost:$GRPC_PORT"
+  echo "   Internal network access: $CONTAINER_NAME:50051"
+  echo ""
+  echo "Check logs: docker logs $CONTAINER_NAME"
+  echo "Stop server: docker stop $CONTAINER_NAME"
+else
+  echo "❌ Docker run failed."
+  exit 1
+fi
