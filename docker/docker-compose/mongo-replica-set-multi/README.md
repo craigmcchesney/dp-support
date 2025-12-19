@@ -98,3 +98,33 @@ cd ../mongo-replica-set-single/
 ```
 
 External URI that works: `mongodb://admin:admin@localhost:27017/?replicaSet=rs0&authSource=admin`
+
+## Using the Mongo Replica Set
+
+To run an ingestion server against the mongo replica set started by this docker compose configuration, use the supplied script:
+
+```
+./start-ingestion-server.sh
+```
+
+To run a test data generator against that ingestion server, use the script:
+
+```
+./run-test-data-generator.sh
+```
+
+## Cleaning Up
+
+You must manually stop the ingestion server:
+
+```
+docker stop dp-ingestion-server
+```
+
+And then stop the replica set docker container:
+
+Stop the database as shown below:
+
+```
+docker compose down -v
+```

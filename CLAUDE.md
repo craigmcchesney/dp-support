@@ -28,12 +28,14 @@ This is dp-support, a utilities repository for managing the Data Platform ecosys
 cd docker/docker-compose/mongo-replica-set-single/
 ./start-mongo-replica-set-single.sh
 ```
-- **Purpose**: MongoDB replica set for testing transaction support and replica set features
+- **Purpose**: MongoDB replica set for external client testing (MongoDB Compass, host applications)
 - **Connection URI**: `mongodb://admin:admin@localhost:27017/?replicaSet=rs0&authSource=admin`
 - **MongoDB Compass**: Use the connection URI above for GUI access
 - **Credentials**: admin/admin (configured with root role)
 - **Keyfile authentication**: Uses generated keyfile for internal replica set communication
 - **Persistent data**: Stored in `./data/mongo` directory
+- **Native ingestion server**: `./start-ingestion-server.sh` (connects externally to Docker MongoDB)
+- **Native test data generator**: `./run-test-data-generator.sh` (connects to native ingestion server)
 
 **Multi-node replica set (docker-compose):**
 ```bash
@@ -50,6 +52,8 @@ cd docker/docker-compose/mongo-replica-set-multi/
 - **Persistent data**: Stored in `./data/mongo1`, `./data/mongo2`, `./data/mongo3` directories
 - **Testing scenarios**: Primary failover (via docker exec), distributed transactions (internal), replica set mechanics
 - **For external clients**: Use the single-node replica set instead
+- **Docker ingestion server**: `./start-ingestion-server.sh` (connects internally to Docker MongoDB cluster)
+- **Docker test data generator**: `./run-test-data-generator.sh` (connects to Docker ingestion server)
 
 ### Docker Infrastructure
 **Envoy proxy:** `./bin/envoy-docker-create/start/stop/remove`
@@ -61,13 +65,21 @@ cd docker/docker-compose/mongo-replica-set-multi/
 - `./bin/app-run-{ingestion|query}-benchmark` - Run performance benchmarks
 - `./bin/app-run-{ingestion|query}-bytes-benchmark` - Byte-based benchmark variants
 
+### Parameterized Scripts
+**Docker ingestion server** (for docker-compose scenarios):
+- `./bin/server-docker-ingest-start <DOCKER_NETWORK> <MONGO_URI>` - Parameterized Docker ingestion server
+- `./bin/app-docker-run-test-data-generator <DOCKER_NETWORK> <GRPC_CONNECT_STRING>` - Parameterized Docker test data generator
+
+**Native ingestion server** (for host applications):
+- `./bin/server-ingest-start [MONGO_URI]` - Native ingestion server with optional MongoDB URI override
+
 ### Docker Compose Ecosystems
 **Full ecosystem with Envoy load balancer:**
 ```bash
 cd docker/docker-compose/dp-ecosystem/
-docker compose up -d
+./start-dp-ecosystem.sh
 # Test data generator
-~/data-platform/bin/app-run-docker-test-data-generator
+./run-test-data-generator.sh
 ```
 
 **Load Balancer Configuration:**
@@ -195,6 +207,33 @@ Benchmark services use separate ports and databases to avoid conflicts:
 
 ### Data Generation
 Sample data uses fixed timestamp starting at 2023-10-31T15:51:00.000+00:00 for consistent testing and development.
+
+### Docker Compose Wrapper Scripts & Networking Patterns
+
+Each docker-compose scenario provides consistent wrapper scripts for easy testing:
+
+**Consistent Script Interface:**
+- `start-*.sh` - Start the main services (MongoDB, ecosystem)
+- `start-ingestion-server.sh` - Start ingestion server appropriate for the scenario
+- `run-test-data-generator.sh` - Generate test data using the scenario's ingestion server
+
+**Networking Patterns:**
+- **mongo-replica-set-single**: External connections only
+  - MongoDB: Docker container accessible via `localhost:27017`
+  - Ingestion server: Native Java process connects externally to Docker MongoDB
+  - Test generator: Native Java process connects to native ingestion server
+- **mongo-replica-set-multi**: Internal Docker networking only
+  - MongoDB: 3-node cluster accessible only within Docker network
+  - Ingestion server: Docker container connects internally using `mongo1:27017,mongo2:27017,mongo3:27017`
+  - Test generator: Docker container connects to Docker ingestion server
+- **dp-ecosystem**: Full containerized ecosystem
+  - Complete Docker-based setup with Envoy load balancer
+  - All components communicate within Docker network
+
+**Script Parameterization:**
+- Main scripts accept parameters for network and connection configuration
+- Wrapper scripts provide scenario-specific parameter values
+- Maintains backward compatibility while enabling reuse across scenarios
 
 ### Kubernetes Scaling Limitations & Resource Requirements
 

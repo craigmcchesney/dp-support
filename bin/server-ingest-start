@@ -41,7 +41,14 @@ test -e "$LOG4J_CONFIG" || { echo "fatal error: log4j config file: $LOG4J_CONFIG
 DP_BIN=$DP_HOME/bin
 test -d "$DP_BIN" || { echo "fatal error: $DP_BIN directory does not exist"; exit 1; }
 
-APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -cp $APP_JAR com.ospreydcs.dp.service.ingest.server.IngestionGrpcServer"
+# Optional MONGO_URI parameter
+MONGO_URI="$1"
+
+if [ -n "$MONGO_URI" ]; then
+  APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -Ddp.MongoClient.uri=\"$MONGO_URI\" -cp $APP_JAR com.ospreydcs.dp.service.ingest.server.IngestionGrpcServer"
+else
+  APP_CMD="java -Ddp.config=$APP_CONFIG -Dlog4j.configurationFile=$LOG4J_CONFIG -cp $APP_JAR com.ospreydcs.dp.service.ingest.server.IngestionGrpcServer"
+fi
 
 echo "svc_name: $SVC_NAME"
 echo "app_cmd: $APP_CMD"

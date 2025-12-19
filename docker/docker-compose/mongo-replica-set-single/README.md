@@ -12,12 +12,6 @@ Run the scenario using the provided shell script:
 dp-support/docker/docker-compose/mongo-replica-set-single/start-mongo-replica-set-single.sh
 ```
 
-Stop the database as shown below:
-
-```
-docker compose -f dp-support/docker/docker-compose/mongo-replica-set-single/docker-compose.yml down -v
-```
-
 ## Database Connection URI
 
 Use the following URI to connect to the database from a client application or Mongo Compass UI:
@@ -56,4 +50,34 @@ If you need to test Docker containers connecting to MongoDB (like ingestion serv
 ```
 cd ../mongo-replica-set-multi/
 ./start-mongo-replica-set-multi.sh
+```
+
+## Using the Mongo Replica Set
+
+To run an ingestion server against the mongo replica set started by this docker compose configuration, use the supplied script:
+
+```
+./start-ingestion-server.sh
+```
+
+To run a test data generator against that ingestion server, use the script:
+
+```
+./run-test-data-generator.sh
+```
+
+## Cleaning Up
+
+You must manually stop the ingestion server:
+
+```
+../../../bin/server-ingest-stop
+```
+
+And then stop the replica set docker container:
+
+Stop the database as shown below:
+
+```
+docker compose down -v
 ```

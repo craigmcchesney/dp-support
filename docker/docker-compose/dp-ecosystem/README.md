@@ -6,10 +6,10 @@ To demonstrate the configuration of a static Envoy load balancer for the Ingesti
 
 ## Running
 
-Run the scenario using docker compose as illustrated below:
+Run the scenario using the start script:
 
 ```
-/usr/bin/docker compose -f dp-support/docker/docker-compose/dp-ecosystem/docker-compose.yml -p dp-ecosystem up -d
+./start-dp-ecosystem
 ```
 
 Once the ecosystem is running, any MLDP client can be used to interact with the services on the standard ports (50051 - ingestion, 50052 - query, 50053 - annotation, 50054 - ingestion stream).
@@ -26,7 +26,15 @@ The Envoy load balancer receives requests on port 8080 and dipatches them to the
 There is also a script for running the test data generator inside the docker environment against the docker service ecosystem.  The script is in dp-support/bin:
 
 ```
-app-run-docker-test-data-generator
+./run-test-data-generator.sh
 ```
 
 Note that when running the docker client, we are overriding the ingestion service hostname to use the docker service name for the Envoy load balancer, e.g., "eco-envoy", on port 8080.
+
+## Stopping
+
+To stop the ecosystem, use docker compose down:
+
+```
+docker compose down -v
+```
