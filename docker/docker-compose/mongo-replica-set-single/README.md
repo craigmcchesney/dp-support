@@ -1,6 +1,8 @@
 ## Overview
 
-This docker-compose file runs MongoDB in a single-node replica set configuration.  It is useful for testing where a minimal replica set is required.
+This docker-compose file runs MongoDB in a single-node replica set configuration. It is designed for **external client connections** from host applications, MongoDB Compass, and other external tools.
+
+**⚠️ Important**: This configuration is optimized for external connections only. For testing Docker containers that need to connect to MongoDB, use the `mongo-replica-set-multi` scenario instead.
 
 ## Running
 
@@ -39,4 +41,19 @@ docker logs mongo
 Send hello command via mongo shell to running container to check topology and stats:
 ```
 docker exec mongo mongosh -u admin -p admin --authenticationDatabase admin --eval "db.hello()"
+```
+
+## Use Cases
+
+This setup is perfect for:
+- **External client testing**: MongoDB Compass, host applications
+- **Development work**: Local applications connecting to replica set
+- **Simple testing**: Minimal replica set features without complexity
+
+## For Docker Container Testing
+
+If you need to test Docker containers connecting to MongoDB (like ingestion servers), use the multi-node replica set instead:
+```
+cd ../mongo-replica-set-multi/
+./start-mongo-replica-set-multi.sh
 ```
