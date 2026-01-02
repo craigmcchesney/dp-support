@@ -34,7 +34,7 @@ spec:
         args:
         - "-Xmx400m"  # Set max heap to 400MB, leave more room for off-heap
         - "-Xms200m"  # Initial heap size
-        - "-Ddp.MongoClient.dbHost=mongodb"
+        - "-Ddp.MongoClient.uri=mongodb://admin:admin@mongodb:27017/"
         - "-cp"
         - "/app/dp-service.jar"
         - "com.ospreydcs.dp.service.annotation.server.AnnotationGrpcServer"

@@ -28,7 +28,7 @@ services:
       networks:
         - eco-network
       command:
-        - "-Ddp.MongoClient.dbHost=eco-mongodb"
+        - "-Ddp.MongoClient.uri=mongodb://admin:admin@eco-mongodb:27017/"
         - "-cp"
         - "/app/dp-service.jar"
         - "com.ospreydcs.dp.service.ingest.server.IngestionGrpcServer"
@@ -42,7 +42,7 @@ services:
       networks:
         - eco-network
       command:
-        - "-Ddp.MongoClient.dbHost=eco-mongodb"
+        - "-Ddp.MongoClient.uri=mongodb://admin:admin@eco-mongodb:27017/"
         - "-cp"
         - "/app/dp-service.jar"
         - "com.ospreydcs.dp.service.ingest.server.IngestionGrpcServer"
@@ -56,7 +56,7 @@ services:
       networks:
         - eco-network
       command:
-        - "-Ddp.MongoClient.dbHost=eco-mongodb"
+        - "-Ddp.MongoClient.uri=mongodb://admin:admin@eco-mongodb:27017/"
         - "-cp"
         - "/app/dp-service.jar"
         - "com.ospreydcs.dp.service.query.server.QueryGrpcServer"
@@ -70,7 +70,7 @@ services:
       networks:
         - eco-network
       command:
-        - "-Ddp.MongoClient.dbHost=eco-mongodb"
+        - "-Ddp.MongoClient.uri=mongodb://admin:admin@eco-mongodb:27017/"
         - "-cp"
         - "/app/dp-service.jar"
         - "com.ospreydcs.dp.service.annotation.server.AnnotationGrpcServer"

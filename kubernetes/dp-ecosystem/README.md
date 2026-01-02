@@ -26,7 +26,7 @@ The Kubernetes deployment provides:
 - **ingestion-stream-deployment.yaml**: Ingestion Stream service with 2 initial replicas
 - **ingestion-stream-service.yaml**: NodePort service exposing ingestion stream on ports 31409/32610
 - **hpa.yaml**: HorizontalPodAutoscaler configurations for all services
-- **deployment-script.yaml**: Complete step-by-step deployment instructions
+- **deployment-instructions.md**: Complete step-by-step deployment instructions
 
 ## Service Architecture
 
@@ -47,6 +47,9 @@ The Kubernetes deployment provides:
 ## Quick Start
 
 ```bash
+# 0. Start minikube
+minikube start
+
 # 1. Build all DP service images
 ./docker/applications/build-dp-images.sh
 
@@ -58,7 +61,8 @@ minikube image load dp-ingestion-stream-service:latest
 
 # 3. Deploy all services
 cd kubernetes/dp-ecosystem
-kubectl apply -f .
+kubectl apply -f namespace.yaml  # Create namespace first
+kubectl apply -f .                # Deploy all resources
 
 # 4. Check status
 kubectl get all -n dp-ecosystem
@@ -66,6 +70,14 @@ kubectl get all -n dp-ecosystem
 # 5. Get external access URLs
 minikube ip  # Use this IP with the NodePorts above
 ```
+
+#6. Generate test data
+Once the ecosystem is running, the MLDP sample data generator can be used to ingest some data, using the IP address obtained above using the specified gRPC port for the configuration, e.g.,
+```
+java -Ddp.GrpcClient.ingestionConnectString=192.168.49.2:31406 com.ospreydcs.dp.service.ingest.utility.TestDataGenerator
+```
+
+NOTE that because minikube is a development tool that is simulating a cluster on a single host, the performance is quite poor even for the sample data generator. That tool usually runs in a matter of seconds against a single Java application, but takes over 10 minutes to run against a minikube cluster!  If there are time out errors on the test data generator console, it is likely that it timed out while waiting for the expected responses.
 
 ## Horizontal Pod Autoscaling
 
